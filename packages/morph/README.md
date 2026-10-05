@@ -23,4 +23,4 @@ const pairs = planPixels(from, to);
 const svgRects = pixelMarkup(pixelFrame(pairs, 0.5));
 ```
 
-Grids default to 32×32; pass `{ size }` to `planPixels`, `pixelFrame` and `morphPixels` for others. `run.current()` returns the pixels on screen, so a new morph can start mid-flight.
+Grids default to 32×32; pass `{ size }` to `planPixels`, `pixelFrame` and `morphPixels` for others. When many morphs run at once, pass `{ frameMs: 50, markup: pixelPathMarkup }` to `morphPixels`: it steps at a pixel-art 20 fps and draws one `<path>` per colour instead of one `<rect>` per run. `run.current()` returns the pixels on screen, so a new morph can start mid-flight.

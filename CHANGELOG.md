@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `@botharness/pixel-morph`: `morphPixels` takes `frameMs` to advance in fixed steps and only draw when the step changes, and `markup` to choose the renderer; the new `pixelPathMarkup` draws one `<path>` per colour. Defaults and `pixelMarkup` output are unchanged. In BotHarness this cut 32 simultaneous pixel morphs from about 1 s to about 0.2 s of main-thread work per second.
+
 ## 0.1.0
 
 - `@botharness/pixel-morph`: pixel pairing, frames, SVG markup and a `requestAnimationFrame` player, extracted from BotHarness; grid size is now an option.
