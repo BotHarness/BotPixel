@@ -8,7 +8,8 @@
  * Dry run unless `--yes`: a publish cannot be undone.
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,21 +19,31 @@ const tag = process.argv.includes('--tag')
   ? process.argv[process.argv.indexOf('--tag') + 1]
   : undefined;
 
-// The token only reaches the publish processes, through the environment: argv is
-// visible in `ps` and CI logs, and a project .npmrc would apply it to every npm call.
+const pnpm = (args, cwd, env) =>
+  execFileSync('pnpm', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], env });
+
+process.stdout.write('building and verifying…\n');
+pnpm(['build'], root);
+pnpm(['verify'], root);
+
+// The token only reaches the publish processes, through a throwaway npmrc (mode 600)
+// named by NPM_CONFIG_USERCONFIG: argv is visible in `ps` and CI logs, and a project
+// .npmrc would apply it to every npm call. pnpm 11+ ignores `npm_config_*` auth
+// variables, which is why an environment variable alone is not enough.
 let publishEnv = process.env;
+let tokenDir;
 const token = readToken();
 if (token && yes) {
-  publishEnv = { ...process.env, 'npm_config_//registry.npmjs.org/:_authToken': token };
+  tokenDir = mkdtempSync(join(tmpdir(), 'botpixel-release-'));
+  const userconfig = join(tokenDir, 'npmrc');
+  writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${token}\n`, { mode: 0o600 });
+  publishEnv = { ...process.env, NPM_CONFIG_USERCONFIG: userconfig };
 }
 
 const ORDER = [
   { dir: 'packages/morph', name: '@botharness/pixel-morph', why: 'depends on nothing' },
   { dir: 'packages/avatar', name: '@botharness/pixel-avatar', why: 'depends on pixel-morph' },
 ];
-
-const pnpm = (args, cwd, env) =>
-  execFileSync('pnpm', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], env });
 
 /**
  * The publish token: NPM_TOKEN in CI (the repo secret), else `npm_release.token` (gitignored, written
@@ -50,18 +61,20 @@ function readToken() {
   }
 }
 
-process.stdout.write('building and verifying…\n');
-pnpm(['build'], root);
-pnpm(['verify'], root);
+try {
+  for (const pkg of ORDER) publish(pkg);
+} finally {
+  if (tokenDir) rmSync(tokenDir, { recursive: true, force: true });
+}
 
-for (const pkg of ORDER) {
+function publish(pkg) {
   const version = JSON.parse(readFileSync(join(root, pkg.dir, 'package.json'), 'utf8')).version;
   process.stdout.write(`\n${pkg.name}@${version}  — ${pkg.why}\n`);
   if (!yes) {
     process.stdout.write(
       `  would run: pnpm --filter ${pkg.name} publish --access public${tag ? ` --tag ${tag}` : ''}\n`,
     );
-    continue;
+    return;
   }
   const args = ['--filter', pkg.name, 'publish', '--access', 'public', '--no-git-checks'];
   if (tag) args.push('--tag', tag);
