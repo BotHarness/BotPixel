@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+
+# esbuild ships its platform binary through a postinstall script, and pnpm 12 refuses
+# to run a dependency's install script unless it is allowed here
+allowBuilds:
+  esbuild: true
+
+linkWorkspacePackages: true

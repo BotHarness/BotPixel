@@ -5,3 +5,6 @@ coverage/
 .DS_Store
 .env
 .env.*
+npm_release.token
+*.orig
+*.rej
