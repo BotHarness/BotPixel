@@ -3,10 +3,13 @@ import { readFileSync } from 'node:fs';
 import { pixelFrame, pixelMarkup, planPixels } from '@botharness/pixel-morph';
 import { describe, expect, it } from 'vitest';
 import {
+  AVATAR_HAIR_PARTS,
   AVATAR_PARTS,
   AVATAR_PRESETS,
+  AVATAR_RANGES,
   AVATAR_TURNS,
   DEFAULT_RECIPE,
+  detailedRecipe,
   PIXEL_SYMBOLS,
   faceCells,
   pixelAvatarSvg,
@@ -23,6 +26,7 @@ const golden = JSON.parse(
   seeds: string[];
   colors: string[];
   svg: Record<string, string>;
+  detailed: Record<string, string>;
   seeded: Record<string, PixelAvatarRecipe>;
   symbols: Record<string, string>;
   morph: Record<string, string>;
@@ -42,6 +46,32 @@ describe('BotHarness compatibility', () => {
       actual[`${key}+turns`] = hash(pixelAvatarSvg(recipe, { turns: AVATAR_TURNS }));
     }
     expect(actual).toEqual(golden.svg);
+  });
+
+  it('renders split hair and bounded geometry exactly as BotHarness does', () => {
+    const base = detailedRecipe(DEFAULT_RECIPE);
+    const recipes: Record<string, PixelAvatarRecipe> = { base };
+    AVATAR_PRESETS.forEach(
+      (recipe, index) => (recipes[`preset-${index}`] = detailedRecipe(recipe)),
+    );
+    for (const [part, values] of Object.entries(AVATAR_HAIR_PARTS))
+      for (const value of values)
+        recipes[`${part}-${value}`] = {
+          ...base,
+          bangs: 'none',
+          sideHair: 'none',
+          backHair: 'none',
+          [part]: value,
+        };
+    for (const [key, [min, max]] of Object.entries(AVATAR_RANGES))
+      for (const value of [min, max])
+        recipes[`${key}=${value}`] = { ...base, backHair: 'long', [key]: value };
+    const actual: Record<string, string> = {};
+    for (const [key, recipe] of Object.entries(recipes)) {
+      actual[key] = hash(pixelAvatarSvg(recipe));
+      actual[`${key}+turns`] = hash(pixelAvatarSvg(recipe, { turns: AVATAR_TURNS }));
+    }
+    expect(actual).toEqual(golden.detailed);
   });
 
   it('seeds the same face from the same name', () => {
