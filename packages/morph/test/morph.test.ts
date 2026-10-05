@@ -53,6 +53,12 @@ describe('pixelMarkup', () => {
       '<rect x="0" y="0" width="2" height="1" fill="#000000"/><rect x="2" y="0" width="1" height="1" fill="#ffffff"/>',
     );
   });
+
+  it('escapes colours so they cannot leave the fill attribute', () => {
+    const markup = pixelMarkup([{ x: 0, y: 0, c: '"/><script>alert(1)</script><rect fill="' }]);
+    expect(markup).not.toContain('<script');
+    expect(markup.match(/"/gu)).toHaveLength(10);
+  });
 });
 
 describe('morphPixels', () => {
@@ -80,5 +86,21 @@ describe('morphPixels', () => {
     again.cancel();
     await expect(again.finished).resolves.toBe(false);
     expect(shown.length).toBeGreaterThan(0);
+  });
+
+  it('lets only the newest run on a group draw', async () => {
+    const callbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => callbacks.push(cb));
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => {
+      callbacks[id - 1] = () => undefined;
+    });
+    const group = { innerHTML: '' } as unknown as SVGGElement;
+    const first = morphPixels(group, square, bar, 100);
+    callbacks[0]!(0);
+    const second = morphPixels(group, first.current(), square, 100);
+    await expect(first.finished).resolves.toBe(false);
+    for (let i = 1, time = 0; i < callbacks.length; i++, time += 50) callbacks[i]!(time);
+    await expect(second.finished).resolves.toBe(true);
+    expect(group.innerHTML).toBe(pixelMarkup(square));
   });
 });

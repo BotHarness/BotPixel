@@ -90,7 +90,15 @@ export function pixelFrame(
   return [...grid.values()];
 }
 
-/** SVG `<rect>` markup for cells, merging horizontal runs of one colour. */
+/** Escapes a value for a double-quoted XML attribute. */
+export function escapeAttribute(value: string): string {
+  return value.replace(/[&<>"']/gu, (char) => `&#${char.charCodeAt(0)};`);
+}
+
+/**
+ * SVG `<rect>` markup for cells, merging horizontal runs of one colour. Colours are escaped,
+ * so the markup is safe to assign to `innerHTML` whatever the cells contain.
+ */
 export function pixelMarkup(cells: readonly PixelCell[]): string {
   const rows = new Map<number, Map<number, string>>();
   for (const cell of cells) {
@@ -106,16 +114,19 @@ export function pixelMarkup(cells: readonly PixelCell[]): string {
       const color = row.get(x)!;
       let width = 1;
       while (xs[i + width] === x + width && row.get(x + width) === color) width++;
-      markup += `<rect x="${x}" y="${y}" width="${width}" height="1" fill="${color}"/>`;
+      markup += `<rect x="${x}" y="${y}" width="${width}" height="1" fill="${escapeAttribute(color)}"/>`;
       i += width;
     }
   }
   return markup;
 }
 
+const active = new WeakMap<SVGGElement, PixelMorphRun>();
+
 /**
  * Plays a morph into an SVG group with `requestAnimationFrame`. `current()` returns the pixels
- * on screen, so a new morph can start from mid-flight.
+ * on screen, so a new morph can start from mid-flight. Starting a morph on a group cancels the
+ * one already running there, so only the newest run draws.
  */
 export function morphPixels(
   group: SVGGElement,
@@ -124,6 +135,7 @@ export function morphPixels(
   duration: number,
   options: PixelGridOptions = {},
 ): PixelMorphRun {
+  active.get(group)?.cancel();
   const pairs = planPixels(from, to, options);
   let frame = 0;
   let start = -1;
@@ -141,21 +153,25 @@ export function morphPixels(
     if (markup !== drawn) group.innerHTML = drawn = markup;
     if (t >= 1) {
       frame = 0;
+      if (active.get(group) === run) active.delete(group);
       settle(true);
       return;
     }
     frame = requestAnimationFrame(tick);
   };
-  frame = requestAnimationFrame(tick);
-  return {
+  const run: PixelMorphRun = {
     current: () => shown,
     cancel() {
       if (frame) cancelAnimationFrame(frame);
       frame = 0;
+      if (active.get(group) === run) active.delete(group);
       settle(false);
     },
     finished,
   };
+  active.set(group, run);
+  frame = requestAnimationFrame(tick);
+  return run;
 }
 
 /**

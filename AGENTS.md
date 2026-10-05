@@ -1,6 +1,6 @@
 # AGENTS.md — BotPixel
 
-Two packages: `packages/morph` (`@botharness/pixel-morph`, generic pixel morph) and `packages/avatar` (`@botharness/pixel-avatar`, the avatar generator and symbols). Both are pure TypeScript with no runtime dependencies; `pixel-avatar` uses `pixel-morph` only for its `PixelCell` type.
+Two packages: `packages/morph` (`@botharness/pixel-morph`, generic pixel morph) and `packages/avatar` (`@botharness/pixel-avatar`, the avatar generator and symbols). Both are pure TypeScript with no third-party runtime dependencies; `pixel-avatar` depends only on `pixel-morph` (for `PixelCell` and attribute escaping).
 
 ## Commands
 

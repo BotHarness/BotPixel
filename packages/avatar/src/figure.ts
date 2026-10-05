@@ -1,4 +1,4 @@
-import type { PixelCell } from '@botharness/pixel-morph';
+import { escapeAttribute, type PixelCell } from '@botharness/pixel-morph';
 import type { PixelAvatarRecipe } from './recipe.js';
 
 type Cell = string | undefined;
@@ -91,7 +91,7 @@ function rects(grid: Grid): string {
       }
       let w = 1;
       while (x + w < N && grid[y]![x + w] === c) w++;
-      m += `<rect x="${x}" y="${y}" width="${w}" height="1" fill="${c}"/>`;
+      m += `<rect x="${x}" y="${y}" width="${w}" height="1" fill="${escapeAttribute(c)}"/>`;
       x += w;
     }
   }
