@@ -4,6 +4,7 @@ import {
   morphPixels,
   pixelFrame,
   pixelMarkup,
+  pixelPathMarkup,
   planPixels,
   type PixelCell,
 } from '../src/index.js';
@@ -66,6 +67,21 @@ describe('pixelMarkup', () => {
   });
 });
 
+describe('pixelPathMarkup', () => {
+  it('draws one path per colour covering the same runs', () => {
+    expect(pixelPathMarkup(cellsFromRows(['AAB', 'A'], { A: '#000000', B: '#ffffff' }))).toBe(
+      '<path fill="#000000" d="M0 0h2v1h-2zM0 1h1v1h-1z"/><path fill="#ffffff" d="M2 0h1v1h-1z"/>',
+    );
+  });
+
+  it('escapes colours and skips non-finite coordinates like pixelMarkup', () => {
+    const hostile = { x: '0" onload="alert(1)', y: 0, c: '#000000' } as unknown as PixelCell;
+    expect(pixelPathMarkup([hostile, { x: 1, y: Number.NaN, c: '#000000' }])).toBe('');
+    const markup = pixelPathMarkup([{ x: 0, y: 0, c: '"/><script>alert(1)</script><path fill="' }]);
+    expect(markup).not.toContain('<script');
+  });
+});
+
 describe('morphPixels', () => {
   afterEach(() => vi.unstubAllGlobals());
 
@@ -107,5 +123,43 @@ describe('morphPixels', () => {
     for (let i = 1, time = 0; i < callbacks.length; i++, time += 50) callbacks[i]!(time);
     await expect(second.finished).resolves.toBe(true);
     expect(group.innerHTML).toBe(pixelMarkup(square));
+  });
+
+  it('steps at frameMs and draws with the chosen markup', async () => {
+    const callbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => callbacks.push(cb));
+    vi.stubGlobal('cancelAnimationFrame', () => undefined);
+    let writes = 0;
+    let html = '';
+    const group = {
+      get innerHTML() {
+        return html;
+      },
+      set innerHTML(value: string) {
+        writes++;
+        html = value;
+      },
+    } as unknown as SVGGElement;
+    const run = morphPixels(group, square, bar, 800, { frameMs: 50, markup: pixelPathMarkup });
+    for (let time = 0; callbacks.length; time += 1000 / 60) callbacks.shift()!(time);
+    await expect(run.finished).resolves.toBe(true);
+    expect(writes).toBeLessThanOrEqual(800 / 50 + 1);
+    expect(group.innerHTML).toBe(pixelPathMarkup(bar));
+  });
+
+  it('drives every running morph from one shared animation frame', async () => {
+    const callbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => callbacks.push(cb));
+    vi.stubGlobal('cancelAnimationFrame', () => undefined);
+    const groups = Array.from({ length: 8 }, () => ({ innerHTML: '' }) as unknown as SVGGElement);
+    const runs = groups.map((group) => morphPixels(group, square, bar, 100));
+    expect(callbacks).toHaveLength(1);
+    let requests = 0;
+    for (let time = 0; callbacks.length; time += 50, requests++) callbacks.shift()!(time);
+    await expect(Promise.all(runs.map((run) => run.finished))).resolves.toEqual(
+      runs.map(() => true),
+    );
+    expect(requests).toBe(3);
+    expect(groups.every((group) => group.innerHTML === pixelMarkup(bar))).toBe(true);
   });
 });
