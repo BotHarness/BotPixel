@@ -62,14 +62,25 @@ function readToken() {
 }
 
 try {
-  for (const pkg of ORDER) publish(pkg);
+  for (const pkg of ORDER) await publish(pkg);
 } finally {
   if (tokenDir) rmSync(tokenDir, { recursive: true, force: true });
 }
 
-function publish(pkg) {
+// A release usually bumps one package; the other is already on npm at its version, and
+// publishing it again would fail after the first package went out.
+async function published(name, version) {
+  const res = await fetch(`https://registry.npmjs.org/${name.replace('/', '%2f')}/${version}`);
+  return res.ok;
+}
+
+async function publish(pkg) {
   const version = JSON.parse(readFileSync(join(root, pkg.dir, 'package.json'), 'utf8')).version;
   process.stdout.write(`\n${pkg.name}@${version}  — ${pkg.why}\n`);
+  if (await published(pkg.name, version)) {
+    process.stdout.write('  already on npm, skipped\n');
+    return;
+  }
   if (!yes) {
     process.stdout.write(
       `  would run: pnpm --filter ${pkg.name} publish --access public${tag ? ` --tag ${tag}` : ''}\n`,
