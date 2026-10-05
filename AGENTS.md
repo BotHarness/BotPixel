@@ -25,3 +25,5 @@ pnpm release -- --yes       # publish pixel-morph, then pixel-avatar
 ```
 
 Same flow as BotUI: a granular npm token with _Read and write_ + _Bypass 2FA_, scoped to `@botharness` (a token limited to package names cannot create new packages). To reuse BotUI's saved token, point at it: `NPM_TOKEN_FILE=../BotUI/npm_release.token pnpm release -- --yes`.
+
+In CI, the `release` workflow (manual, Actions → release → Run workflow) does the same with the `NPM_TOKEN` repo secret.

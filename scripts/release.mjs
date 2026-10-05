@@ -35,12 +35,13 @@ const pnpm = (args, cwd, env) =>
   execFileSync('pnpm', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], env });
 
 /**
- * The publish token, if this machine has one: `npm_release.token` (gitignored, written
+ * The publish token: NPM_TOKEN in CI (the repo secret), else `npm_release.token` (gitignored, written
  * by `scripts/npm-token.sh`), or the file named by NPM_TOKEN_FILE, which lets this repo
  * reuse the token BotUI already stores. Absent is not an error: a dry run needs none,
  * and `npm publish` explains a missing token better than this script could.
  */
 function readToken() {
+  if (process.env.NPM_TOKEN) return process.env.NPM_TOKEN.trim();
   const file = process.env.NPM_TOKEN_FILE ?? join(root, 'npm_release.token');
   try {
     return readFileSync(file, 'utf8').trim() || undefined;
