@@ -96,12 +96,14 @@ export function escapeAttribute(value: string): string {
 }
 
 /**
- * SVG `<rect>` markup for cells, merging horizontal runs of one colour. Colours are escaped,
- * so the markup is safe to assign to `innerHTML` whatever the cells contain.
+ * SVG `<rect>` markup for cells, merging horizontal runs of one colour. Colours are escaped and
+ * cells whose coordinates are not finite numbers are skipped, so the markup is safe to assign to
+ * `innerHTML` whatever the cells contain.
  */
 export function pixelMarkup(cells: readonly PixelCell[]): string {
   const rows = new Map<number, Map<number, string>>();
   for (const cell of cells) {
+    if (!Number.isFinite(cell.x) || !Number.isFinite(cell.y)) continue;
     let row = rows.get(cell.y);
     if (!row) rows.set(cell.y, (row = new Map()));
     row.set(cell.x, cell.c);

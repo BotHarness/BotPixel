@@ -2,6 +2,7 @@
 // Usage: pnpm build && node scripts/readme-assets.mjs   (needs ffmpeg on PATH)
 import { spawnSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
   AVATAR_PARTS,
   AVATAR_PRESETS,
@@ -104,7 +105,7 @@ function savePng(canvas, name) {
     ['-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', `${canvas.w}x${canvas.h}`, '-i', '-'].concat([
       '-frames:v',
       '1',
-      new URL(name, OUT).pathname,
+      fileURLToPath(new URL(name, OUT)),
     ]),
     canvas.data,
   );
@@ -127,7 +128,7 @@ function saveGif(frames, name, fps = 25) {
       '[0]split[a][b];[a]palettegen=max_colors=255:stats_mode=full[p];[b][p]paletteuse=dither=none',
       '-loop',
       '0',
-      new URL(name, OUT).pathname,
+      fileURLToPath(new URL(name, OUT)),
     ],
     Buffer.concat(frames.map((f) => f.data)),
   );

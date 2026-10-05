@@ -59,6 +59,11 @@ describe('pixelMarkup', () => {
     expect(markup).not.toContain('<script');
     expect(markup.match(/"/gu)).toHaveLength(10);
   });
+
+  it('skips cells whose coordinates are not finite numbers', () => {
+    const hostile = { x: '0" onload="alert(1)', y: 0, c: '#000000' } as unknown as PixelCell;
+    expect(pixelMarkup([hostile, { x: 1, y: Number.NaN, c: '#000000' }])).toBe('');
+  });
 });
 
 describe('morphPixels', () => {
