@@ -7,6 +7,7 @@ export {
   AVATAR_SWATCHES,
   DEFAULT_RECIPE,
   canonicalRecipe,
+  createSeededRecipe,
   isPixelAvatarRecipe,
   seededRecipe,
   type AvatarColor,

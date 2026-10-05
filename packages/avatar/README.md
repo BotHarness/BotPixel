@@ -14,7 +14,7 @@ const recipe = seededRecipe('DeepSeekBot');
 const svg = pixelAvatarSvg(recipe); // 32×32 viewBox, crisp edges, no ids or scripts
 ```
 
-- `seededRecipe(name)`: the same name always gives the same face.
+- `seededRecipe(name)`: the same name always gives the same face. `createSeededRecipe(namespace)` makes a factory with its own set of faces.
 - `AVATAR_PARTS`, `AVATAR_SWATCHES`, `AVATAR_PRESETS`, `DEFAULT_RECIPE`: everything an editor needs.
 - `isPixelAvatarRecipe`, `canonicalRecipe`: validate and normalise saved recipes.
 - `faceCells`, `pixelSymbolCells`, `symbolArtCells`: pixels for [`@botharness/pixel-morph`](../morph).

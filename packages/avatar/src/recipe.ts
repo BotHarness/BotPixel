@@ -210,20 +210,30 @@ const SEEDED_CHOICES: { [P in AvatarPart]: readonly (typeof AVATAR_PARTS)[P][num
   backdrop: ['sparkles', 'hearts', 'stars', 'dots'],
 };
 
-export function seededRecipe(seed: string, namespace = 'botharness-avatar'): PixelAvatarRecipe {
-  const random = seededRandom(`${namespace}:${seed.trim().toLowerCase()}`);
-  const pick = <T>(values: readonly T[]) => values[Math.floor(random() * values.length)]!;
-  const recipe: Record<string, unknown> = {
-    schemaVersion: 1,
-    family: 'illustrated',
-    assetVersion: 1,
-    rigVersion: 1,
+/**
+ * Returns a name-seeded recipe factory. Different namespaces give different faces for the same
+ * name; the factory takes the name only, so it is safe to pass straight to `Array.map`.
+ */
+export function createSeededRecipe(namespace: string): (seed: string) => PixelAvatarRecipe {
+  return (seed) => {
+    const random = seededRandom(`${namespace}:${seed.trim().toLowerCase()}`);
+    const pick = <T>(values: readonly T[]) => values[Math.floor(random() * values.length)]!;
+    const recipe: Record<string, unknown> = {
+      schemaVersion: 1,
+      family: 'illustrated',
+      assetVersion: 1,
+      rigVersion: 1,
+    };
+    for (const part of Object.keys(AVATAR_PARTS) as AvatarPart[])
+      recipe[part] = pick(SEEDED_CHOICES[part]);
+    for (const color of AVATAR_COLORS) recipe[color] = pick(AVATAR_SWATCHES[color].slice(0, 7));
+    return recipe as PixelAvatarRecipe;
   };
-  for (const part of Object.keys(AVATAR_PARTS) as AvatarPart[])
-    recipe[part] = pick(SEEDED_CHOICES[part]);
-  for (const color of AVATAR_COLORS) recipe[color] = pick(AVATAR_SWATCHES[color].slice(0, 7));
-  return recipe as PixelAvatarRecipe;
 }
+
+/** The same name always gives the same face (BotHarness's namespace). */
+export const seededRecipe: (seed: string) => PixelAvatarRecipe =
+  createSeededRecipe('botharness-avatar');
 
 const preset = (parts: Partial<PixelAvatarRecipe>): PixelAvatarRecipe => ({
   ...DEFAULT_RECIPE,

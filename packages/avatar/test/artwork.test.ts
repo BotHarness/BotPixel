@@ -7,6 +7,7 @@ import {
   pixelAvatarSvg,
   isPixelAvatarRecipe,
   seededRecipe,
+  createSeededRecipe,
   type AvatarPart,
   type PixelAvatarRecipe,
 } from '../src/index.js';
@@ -89,9 +90,11 @@ describe('pixel avatar artwork', () => {
     expect(seededRecipe('  ada lovelace ')).toEqual(ada);
     expect(ada.pose).toBe('front');
     const names = ['Ada', 'Grace', 'Linus', 'Margaret', 'Alan', 'Barbara', '小明', 'Rin'];
-    const recipes = names.map((name) => seededRecipe(name));
+    const recipes = names.map(seededRecipe);
     expect(new Set(recipes.map((recipe) => JSON.stringify(recipe))).size).toBe(names.length);
     for (const recipe of recipes) expect(() => pixelAvatarSvg(recipe)).not.toThrow();
+    expect(names.map(seededRecipe)[1]).toEqual(seededRecipe(names[1]!));
+    expect(createSeededRecipe('other')('Ada')).not.toEqual(seededRecipe('Ada'));
   });
 
   it('tints the tile from the hair colour and keeps colourless hair on paper', () => {
