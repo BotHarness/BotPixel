@@ -146,4 +146,20 @@ describe('morphPixels', () => {
     expect(writes).toBeLessThanOrEqual(800 / 50 + 1);
     expect(group.innerHTML).toBe(pixelPathMarkup(bar));
   });
+
+  it('drives every running morph from one shared animation frame', async () => {
+    const callbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => callbacks.push(cb));
+    vi.stubGlobal('cancelAnimationFrame', () => undefined);
+    const groups = Array.from({ length: 8 }, () => ({ innerHTML: '' }) as unknown as SVGGElement);
+    const runs = groups.map((group) => morphPixels(group, square, bar, 100));
+    expect(callbacks).toHaveLength(1);
+    let requests = 0;
+    for (let time = 0; callbacks.length; time += 50, requests++) callbacks.shift()!(time);
+    await expect(Promise.all(runs.map((run) => run.finished))).resolves.toEqual(
+      runs.map(() => true),
+    );
+    expect(requests).toBe(3);
+    expect(groups.every((group) => group.innerHTML === pixelMarkup(bar))).toBe(true);
+  });
 });

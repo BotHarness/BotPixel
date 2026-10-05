@@ -163,9 +163,29 @@ export function pixelPathMarkup(cells: readonly PixelCell[]): string {
 }
 
 const active = new WeakMap<SVGGElement, PixelMorphRun>();
+const tickers = new Set<(time: number) => void>();
+let loopId = 0;
+
+function loop(time: number): void {
+  for (const tick of [...tickers]) tick(time);
+  loopId = tickers.size > 0 ? requestAnimationFrame(loop) : 0;
+}
+
+function addTicker(tick: (time: number) => void): void {
+  tickers.add(tick);
+  if (loopId === 0) loopId = requestAnimationFrame(loop);
+}
+
+function removeTicker(tick: (time: number) => void): void {
+  tickers.delete(tick);
+  if (tickers.size === 0 && loopId !== 0) {
+    cancelAnimationFrame(loopId);
+    loopId = 0;
+  }
+}
 
 /**
- * Plays a morph into an SVG group with `requestAnimationFrame`. `current()` returns the pixels
+ * Plays a morph into an SVG group. Every running morph shares one `requestAnimationFrame` loop. `current()` returns the pixels
  * on screen, so a new morph can start from mid-flight. `frameMs` steps the morph at a fixed
  * rate and `markup` chooses the renderer. Starting a morph on a group cancels the
  * one already running there, so only the newest run draws.
@@ -181,7 +201,6 @@ export function morphPixels(
   const pairs = planPixels(from, to, options);
   const frameMs = options.frameMs ?? 0;
   const render = options.markup ?? pixelMarkup;
-  let frame = 0;
   let start = -1;
   let step = -1;
   let shown: PixelCell[] = [...from];
@@ -190,39 +209,30 @@ export function morphPixels(
   const finished = new Promise<boolean>((resolve) => {
     settle = resolve;
   });
-  const tick = (time: number) => {
+  const stop = (done: boolean) => {
+    removeTicker(tick);
+    if (active.get(group) === run) active.delete(group);
+    settle(done);
+  };
+  function tick(time: number): void {
     if (start < 0) start = time;
     const elapsed = time - start;
     const next = frameMs > 0 ? Math.floor(elapsed / frameMs) : elapsed;
     const t = Math.min(1, (frameMs > 0 ? next * frameMs : elapsed) / duration);
-    if (next === step && t < 1) {
-      frame = requestAnimationFrame(tick);
-      return;
-    }
+    if (next === step && t < 1) return;
     step = next;
     shown = t >= 1 ? [...to] : pixelFrame(pairs, t, options);
     const markup = render(shown);
     if (markup !== drawn) group.innerHTML = drawn = markup;
-    if (t >= 1) {
-      frame = 0;
-      if (active.get(group) === run) active.delete(group);
-      settle(true);
-      return;
-    }
-    frame = requestAnimationFrame(tick);
-  };
+    if (t >= 1) stop(true);
+  }
   const run: PixelMorphRun = {
     current: () => shown,
-    cancel() {
-      if (frame) cancelAnimationFrame(frame);
-      frame = 0;
-      if (active.get(group) === run) active.delete(group);
-      settle(false);
-    },
+    cancel: () => stop(false),
     finished,
   };
   active.set(group, run);
-  frame = requestAnimationFrame(tick);
+  addTicker(tick);
   return run;
 }
 
