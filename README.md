@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/banner.png" alt="BotPixel: the wordmark ringed by a hundred generated pixel avatars" width="100%"></p>
+
 # BotPixel
 
 Pixel art that changes shape. Two small, dependency-free packages from [BotHarness](https://github.com/BotHarness/BotHarness):
@@ -29,11 +31,21 @@ await morphPixels(layer, faceCells(recipe), pixelSymbolCells('search', recipe.ha
   .finished;
 ```
 
+<p align="center"><img src="assets/morph-turn.gif" alt="An avatar morphing into thinking, read, edit, shell and search symbols and back" width="288"></p>
+
+While an agent works, its avatar becomes the tool it is using, pixel by pixel, and turns back into a face when the turn ends. Several bots each follow their own tool:
+
+<p align="center"><img src="assets/morph-crew.gif" alt="Six avatars morphing into different tool symbols out of step" width="100%"></p>
+
 ## How the morph works
 
 1. **Pair.** Both pixel sets are sorted by angle around their own centroid, then matched by proportional index. Neighbours fly to neighbours, and the smaller set is reused, so pixels split or merge instead of popping.
 2. **Fly.** Each pair eases (`easeInOutCubic`) from start to end, hopping by `sin(kπ)·arc`, starting in 4×4 clumps from the top rows down.
 3. **Snap.** Every frame rounds to whole grid cells and switches colour halfway, so it stays pixel art the whole way.
+
+The engine does not know what it is drawing. Here it morphs one generated face straight into the next:
+
+<p align="center"><img src="assets/morph-faces.gif" alt="Generated faces morphing into one another" width="224"></p>
 
 `planPixels` and `pixelFrame` are pure functions, so frames can be rendered offline (video, GIF, canvas) as well as with `morphPixels` in the browser.
 
@@ -49,6 +61,7 @@ Hosts add their own state symbols with `symbolArtCells(rows, color)`, which draw
 pnpm install
 pnpm verify   # format, lint, typecheck, test
 pnpm build
+pnpm assets  # re-render the README banner and GIFs (needs ffmpeg)
 ```
 
 - New eyes, brows, mouths and symbols are character art: add rows, and the diff shows the picture.

@@ -13,6 +13,7 @@
     "format:check": "oxfmt --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "assets": "pnpm build && node scripts/readme-assets.mjs",
     "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
   },
   "devDependencies": {
