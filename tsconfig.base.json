@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"],
+    // paths resolve relative to this file at the repo root, so each package typechecks
+    // against its siblings' source without a build first
+    "paths": {
+      "@botharness/pixel-morph": ["./packages/morph/src/index.ts"],
+      "@botharness/pixel-avatar": ["./packages/avatar/src/index.ts"]
+    }
+  }
+}
