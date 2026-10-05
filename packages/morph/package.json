@@ -1,6 +1,6 @@
 {
   "name": "@botharness/pixel-morph",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Morph any pixel art into any other: pairing, arcs and grid-snapped frames, with an SVG renderer",
   "keywords": [
     "animation",

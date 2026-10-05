@@ -105,11 +105,7 @@ export function escapeAttribute(value: string): string {
   return value.replace(/[&<>"']/gu, (char) => `&#${char.charCodeAt(0)};`);
 }
 
-/**
- * SVG `<rect>` markup for cells, merging horizontal runs of one colour. Colours are escaped and
- * cells whose coordinates are not finite numbers are skipped, so the markup is safe to assign to
- * `innerHTML` whatever the cells contain.
- */
+/** Walks cells row by row, merging horizontal runs of one colour, and skips non-finite coordinates. */
 function colourRuns(
   cells: readonly PixelCell[],
   emit: (x: number, y: number, width: number, colour: string) => void,
@@ -218,7 +214,8 @@ export function morphPixels(
     if (start < 0) start = time;
     const elapsed = time - start;
     const next = frameMs > 0 ? Math.floor(elapsed / frameMs) : elapsed;
-    const t = Math.min(1, (frameMs > 0 ? next * frameMs : elapsed) / duration);
+    const t =
+      elapsed >= duration ? 1 : Math.min(1, (frameMs > 0 ? next * frameMs : elapsed) / duration);
     if (next === step && t < 1) return;
     step = next;
     shown = t >= 1 ? [...to] : pixelFrame(pairs, t, options);
