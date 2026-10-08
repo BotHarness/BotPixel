@@ -1,3 +1,4 @@
+import { seededRandom } from './random.js';
 import { AVATAR_COLORS, type AvatarColor } from './recipe.js';
 
 /**
@@ -212,6 +213,212 @@ export function fillPartLayer(
     }
     out = next;
   }
+  return out;
+}
+
+/** Pixel-perfect line points (Bresenham). With `snap`, the end snaps to 0°, 45° or 90°. */
+export function partLinePoints(
+  from: readonly [number, number],
+  to: readonly [number, number],
+  snap = false,
+): [number, number][] {
+  let [x1, y1] = to;
+  const [x0, y0] = from;
+  if (snap) {
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const ax = Math.abs(dx);
+    const ay = Math.abs(dy);
+    if (ax > ay * 2) y1 = y0;
+    else if (ay > ax * 2) x1 = x0;
+    else {
+      const m = Math.max(ax, ay);
+      x1 = x0 + Math.sign(dx) * m;
+      y1 = y0 + Math.sign(dy) * m;
+    }
+  }
+  const points: [number, number][] = [];
+  const dx = Math.abs(x1 - x0);
+  const dy = -Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1;
+  const sy = y0 < y1 ? 1 : -1;
+  let error = dx + dy;
+  let [x, y] = [x0, y0];
+  for (;;) {
+    points.push([x, y]);
+    if (x === x1 && y === y1) break;
+    const e2 = 2 * error;
+    if (e2 >= dy) {
+      error += dy;
+      x += sx;
+    }
+    if (e2 <= dx) {
+      error += dx;
+      y += sy;
+    }
+  }
+  return points;
+}
+
+/** Rectangle outline points between two corners. With `square`, the far corner makes a square. */
+export function partRectPoints(
+  from: readonly [number, number],
+  to: readonly [number, number],
+  square = false,
+): [number, number][] {
+  const [x0, y0] = from;
+  let [x1, y1] = to;
+  if (square) {
+    const m = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+    x1 = x0 + (x1 < x0 ? -m : m);
+    y1 = y0 + (y1 < y0 ? -m : m);
+  }
+  const [left, right] = [Math.min(x0, x1), Math.max(x0, x1)];
+  const [top, bottom] = [Math.min(y0, y1), Math.max(y0, y1)];
+  const points = new Map<string, [number, number]>();
+  for (let x = left; x <= right; x++)
+    for (const y of [top, bottom]) points.set(`${x},${y}`, [x, y]);
+  for (let y = top; y <= bottom; y++)
+    for (const x of [left, right]) points.set(`${x},${y}`, [x, y]);
+  return [...points.values()];
+}
+
+const BAYER4 = [
+  [0, 8, 2, 10],
+  [12, 4, 14, 6],
+  [3, 11, 1, 9],
+  [15, 7, 13, 5],
+] as const;
+const BAYER2 = [
+  [0, 2],
+  [3, 1],
+] as const;
+
+/** The ordered-dither threshold in [0, 1) for a cell. */
+export function ditherThreshold(x: number, y: number, size: 2 | 4 = 4): number {
+  return size === 4 ? (BAYER4[y & 3]![x & 3]! + 0.5) / 16 : (BAYER2[y & 1]![x & 1]! + 0.5) / 4;
+}
+
+/**
+ * A linear gradient over the 4-connected region of the start cell: each cell's position along
+ * `from`→`to` steps through the tones between `fromTone` and `toTone`, with ordered dithering
+ * between neighboring tones. No RGB is blended; the result is ordinary cells.
+ */
+export function gradientPartLayer(
+  slot: PartSlot,
+  layer: PartLayer,
+  from: readonly [number, number],
+  to: readonly [number, number],
+  color: PartColor,
+  fromTone: PartTone,
+  toTone: PartTone,
+  options: { dither?: 2 | 4; mirror?: boolean } = {},
+): PartLayer {
+  const { width, height } = PART_SLOTS[slot];
+  const out = layer.map((row) => [...row]);
+  const [fx, fy] = from;
+  const region = (sx: number, sy: number): [number, number][] => {
+    if (sx < 0 || sx >= width || sy < 0 || sy >= height) return [];
+    const target = layer[sy]![sx]!;
+    const seen = new Set<number>();
+    const cells: [number, number][] = [];
+    const stack: [number, number][] = [[sx, sy]];
+    while (stack.length) {
+      const [x, y] = stack.pop()!;
+      if (x < 0 || x >= width || y < 0 || y >= height || seen.has(y * width + x)) continue;
+      if (!same(layer[y]![x]!, target)) continue;
+      seen.add(y * width + x);
+      cells.push([x, y]);
+      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    }
+    return cells;
+  };
+  const paint = (
+    cells: [number, number][],
+    start: readonly [number, number],
+    end: readonly [number, number],
+    ditherX: (x: number) => number,
+  ) => {
+    const vx = end[0] - start[0];
+    const vy = end[1] - start[1];
+    const length = vx * vx + vy * vy;
+    const steps = toTone - fromTone;
+    for (const [x, y] of cells) {
+      const t =
+        length === 0
+          ? 0
+          : Math.min(1, Math.max(0, ((x - start[0]) * vx + (y - start[1]) * vy) / length));
+      const position = t * Math.abs(steps);
+      const base = Math.floor(position);
+      const up = position - base > ditherThreshold(ditherX(x), y, options.dither ?? 4) ? 1 : 0;
+      const tone = (fromTone + Math.sign(steps) * Math.min(Math.abs(steps), base + up)) as PartTone;
+      out[y]![x] = { color, tone };
+    }
+  };
+  paint(region(fx, fy), from, to, (x) => x);
+  if (options.mirror) {
+    const mirrored = (point: readonly [number, number]) =>
+      [mirrorPartX(slot, point[0]), point[1]] as const;
+    paint(
+      region(mirrorPartX(slot, fx), fy).filter(([x, y]) => out[y]![x] === layer[y]![x]),
+      mirrored(from),
+      mirrored(to),
+      (x) => mirrorPartX(slot, x),
+    );
+  }
+  return out;
+}
+
+/**
+ * Moves the tone of colored cells by ±1 at random, for texture. The same seed gives the same
+ * result; the seed is used only now, and the result is ordinary cells. With `mirror`, each cell
+ * and its mirror get the same change.
+ */
+export function noisePartLayer(
+  slot: PartSlot,
+  layer: PartLayer,
+  amount: number,
+  seed: string,
+  mirror = false,
+): PartLayer {
+  const random = seededRandom(seed);
+  const rolls = layer.map((row) => row.map(() => [random(), random() < 0.5 ? -1 : 1] as const));
+  return layer.map((row, y) =>
+    row.map((ink, x) => {
+      const source = mirror ? Math.min(x, mirrorPartX(slot, x)) : x;
+      const [roll, direction] = rolls[y]![source]!;
+      if (!ink || roll >= amount) return ink;
+      return {
+        color: ink.color,
+        tone: Math.max(-2, Math.min(2, ink.tone + direction)) as PartTone,
+      };
+    }),
+  );
+}
+
+/** Moves the tone of each colored cell on the points by `delta` once; empty cells are skipped. */
+export function shadePartLayer(
+  slot: PartSlot,
+  layer: PartLayer,
+  points: readonly (readonly [number, number])[],
+  delta: 1 | -1,
+  mirror = false,
+): PartLayer {
+  const { width, height } = PART_SLOTS[slot];
+  const out = layer.map((row) => [...row]);
+  const done = new Set<string>();
+  for (const [x, y] of points)
+    for (const px of mirror ? [x, mirrorPartX(slot, x)] : [x]) {
+      const key = `${px},${y}`;
+      if (done.has(key) || px < 0 || px >= width || y < 0 || y >= height) continue;
+      done.add(key);
+      const ink = layer[y]![px];
+      if (ink)
+        out[y]![px] = {
+          color: ink.color,
+          tone: Math.max(-2, Math.min(2, ink.tone + delta)) as PartTone,
+        };
+    }
   return out;
 }
 
