@@ -1,0 +1,82 @@
+{
+  "headpiece-catears": {
+    "front": "9452c7b6cbba8a2e",
+    "turns": "d675a75f2aafb1c2",
+    "mouths": "9ed97f6b094b2333"
+  },
+  "headpiece-bunnyears": {
+    "front": "13ec82d7ed4baeca",
+    "turns": "9d19fbd1b2718d3f",
+    "mouths": "6b0c082f0e540fdc"
+  },
+  "headpiece-horseears": {
+    "front": "101cf7fad8ac9ef9",
+    "turns": "4d94765de79cab1e",
+    "mouths": "d9d03b7dd9f2b78b"
+  },
+  "headpiece-horns": {
+    "front": "a22a9b6e8f4c86b2",
+    "turns": "0ebce5c641dfd4a7",
+    "mouths": "28fd225f08656ede"
+  },
+  "headpiece-halo": {
+    "front": "954f158bc99d18ff",
+    "turns": "4b639936dfc72bc3",
+    "mouths": "8dd6aae7c1376d78"
+  },
+  "headpiece-wings": {
+    "front": "63f0f10473e8bddb",
+    "turns": "77574a767656e3fc",
+    "mouths": "c5202a98f51fc4dd"
+  },
+  "strand-ahoge": {
+    "front": "f92a345a8553a266",
+    "turns": "0c1f96383a3ffb14",
+    "mouths": "044cb02763e40dba"
+  },
+  "strand-ahoge-colored": {
+    "front": "7eb9af9f066cf278",
+    "turns": "9b5440d78ed4fced",
+    "mouths": "bb6af3d10c286846"
+  },
+  "strand-curl": {
+    "front": "e7468dd9a14aff48",
+    "turns": "559cb0c499b60a1f",
+    "mouths": "24e4e5dd20b4bd1a"
+  },
+  "strand-curl-colored": {
+    "front": "b1bafabdfeea2332",
+    "turns": "fe039784a61bb501",
+    "mouths": "33b32bdf2f15c2d9"
+  },
+  "strand-double": {
+    "front": "fa1d97f32bad5800",
+    "turns": "36566e4232c9a4fe",
+    "mouths": "203c6ce920b1117b"
+  },
+  "strand-double-colored": {
+    "front": "82c568d0b4aae1ef",
+    "turns": "1d794574d4baf713",
+    "mouths": "f36b87fff4c24abd"
+  },
+  "pieces-all": {
+    "front": "212717de93d84697",
+    "turns": "77e1a750921e0fb5",
+    "mouths": "1d3ae4eec2723d33"
+  },
+  "pieces-bangs": {
+    "front": "ce756ab6c4b374ff",
+    "turns": "f3c3fc5f17989372",
+    "mouths": "d160088cad9b0011"
+  },
+  "pieces-back": {
+    "front": "667008479e90c145",
+    "turns": "768506047c44fc4d",
+    "mouths": "a78f2efd0d59344e"
+  },
+  "migrated-ahoge-catears": {
+    "front": "b89b936c9253c4d3",
+    "turns": "eba896bae3422913",
+    "mouths": "efdcdcf1ad1cd4f4"
+  }
+}
