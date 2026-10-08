@@ -13,8 +13,10 @@ import {
   AVATAR_PIECE_COLORS_V4,
   builtInHeadpiece,
   detailedRecipe,
+  isAnimalSpecies,
   hiddenChoices,
   wornPart,
+  type AvatarAnimalSpecies,
   type PixelAvatarRecipe,
 } from './recipe.js';
 
@@ -864,6 +866,46 @@ function drawHeadpiece(
   }
 }
 
+const ANIMALS: Record<
+  AvatarAnimalSpecies,
+  { ears: string[]; x: number; y: number; inner: 'pink' | 'fur'; side?: boolean }
+> = {
+  cat: { ears: ['E...', 'EE..', 'EiE.', 'EEEE'], x: -9, y: 2, inner: 'pink' },
+  fox: { ears: ['D....', 'EE...', 'EiE..', 'EiiE.', 'EEEEE'], x: -10, y: 1, inner: 'fur' },
+  rabbit: { ears: ['EE', 'Ei', 'Ei', 'Ei', 'Ei', 'EE'], x: -6, y: 0, inner: 'pink' },
+  bear: { ears: ['.EE.', 'EiiE', 'EEEE'], x: -10, y: 3, inner: 'fur' },
+  dog: { ears: ['EEE.', 'EEEE', 'EEEE', '.EEE', '..EE'], x: -13, y: 7, inner: 'fur', side: true },
+};
+
+function patternMask(recipe: Recipe, s: number, fs: number): Mask {
+  const cx = C + s;
+  const mid = C + fs * 0.6;
+  switch (recipe.pattern) {
+    case 'tabby':
+      return (x, y) =>
+        (y >= 5 && y <= 8 && Math.abs(x + 0.5 - cx) <= 3 && (x + 40 - Math.round(cx)) % 2 === 0) ||
+        ((y === 17 || y === 19) && Math.abs(x + 0.5 - mid) >= 6.5);
+    case 'spots':
+      return (x, y) =>
+        [
+          [-7, 21],
+          [-6, 22],
+          [-5, 21],
+          [5, 21],
+          [6, 22],
+          [7, 21],
+          [-3, 13],
+          [3, 13],
+        ].some(([dx, dy]) => x === Math.round(cx) + dx! && y === dy);
+    case 'patches':
+      return (x, y) => ellipse(cx - 4, 14, 3.6, 3.2)(x, y) || ellipse(cx + 5, 9, 2.6, 2)(x, y);
+    case 'colorpoint':
+      return (x, y) => (x + 0.5 - cx) ** 2 / 64 + (y + 0.5 - 16.6) ** 2 / 49 > 0.62;
+    default:
+      return () => false;
+  }
+}
+
 const POINTED_EARS: Partial<
   Record<NonNullable<Recipe['species']>, { rows: string[]; rise: number }>
 > = {
@@ -998,11 +1040,17 @@ function renderFigure(
       }
     : front;
   const flower = recipe.species === 'flower';
+  const animal = isAnimalSpecies(recipe.species) ? ANIMALS[recipe.species] : undefined;
   const hiddenNow = hiddenChoices(recipe);
   const drawnParts = new Map(
     REPLACE_PART_SLOTS.flatMap((slot) => {
       const part = wornPart(recipe, slot);
-      const shown = slot === 'petals' || slot === 'flowerBase' ? flower : !hiddenNow.includes(slot);
+      const shown =
+        slot === 'petals' || slot === 'flowerBase'
+          ? flower
+          : slot === 'pattern'
+            ? animal !== undefined
+            : !hiddenNow.includes(slot);
       return part && shown ? [[slot, part.front] as const] : [];
     }),
   );
@@ -1141,12 +1189,24 @@ function renderFigure(
   placeCells(back, inked('backHair'), false);
   overlay(back, 'petals');
   if (headpiece) placeCells(back, headpiece.back);
-  const wornHead = flower ? undefined : builtInHeadpiece(recipe);
+  const wornHead = flower || hiddenNow.includes('headpiece') ? undefined : builtInHeadpiece(recipe);
   const headFront = blank();
   if (wornHead) drawHeadpiece(wornHead, recipe, back, headFront, s, turned ? d : 0);
 
   const head = blank();
   paint(head, face, skin);
+  if (animal) {
+    const pattern = patternMask(recipe, s, fs);
+    if (!skip('pattern'))
+      paint(
+        head,
+        (x, y) => face(x, y) && pattern(x, y),
+        TONES[recipe.pattern === 'patches' ? -2 : -1](skin),
+      );
+    overlay(head, 'pattern');
+    const muzzle = ellipse(C + fs * 0.6, 20.6 + (recipe.height ?? 0), 3.9, 2.6);
+    paint(head, (x, y) => face(x, y) && muzzle(x, y), TONES[2](skin));
+  }
   const h = recipe.height ?? 0;
   if (recipe.beard && !flower && !skip('beard')) {
     const centre = C + fs * 0.6;
@@ -1176,6 +1236,24 @@ function renderFigure(
   const pointed = recipe.species ? POINTED_EARS[recipe.species] : undefined;
   if (flower) {
     // A flower has petals instead of ears.
+  } else if (animal) {
+    paint(head, masks.front, hairColor);
+    const pal = {
+      E: recipe.pattern === 'colorpoint' || animal.side ? shade(skin, 0.72) : skin,
+      i: animal.inner === 'pink' ? '#f4a3b5' : shade(skin, 0.72),
+      D: shade(skin, 0.45),
+    };
+    const cx = Math.round(C + s);
+    const sides = animal.side && turned ? [-d] : [-1, 1];
+    for (const side of sides)
+      sprite(
+        head,
+        animal.ears,
+        side < 0 ? cx + animal.x : cx - animal.x - animal.ears[0]!.length,
+        animal.y,
+        pal,
+        side > 0,
+      );
   } else if (pointed) {
     // Pointed ears are drawn over hair: the outer tip rises above the ear line.
     const pal = { E: skin, e: shade(skin, 0.86), i: shade(skin, 0.74) };
@@ -1198,10 +1276,11 @@ function renderFigure(
       E: skin,
       e: shade(skin, 0.8),
     });
-  if (!pointed && !flower) paint(head, masks.front, hairColor);
+  if (!pointed && !flower && !animal) paint(head, masks.front, hairColor);
   for (const [x, y] of masks.ties ?? [])
     sprite(back, ['T'], Math.round(x), y, { T: shade(recipe.shirtColor, 0.8) });
-  if (!flower && !skip('accessory')) accessory(recipe, head, s, face);
+  if (!flower && !skip('accessory') && !hiddenNow.includes('accessory'))
+    accessory(recipe, head, s, face);
 
   const shadeHair = (g: Grid) => {
     const out = g.map((r) => [...r]);
@@ -1331,7 +1410,8 @@ function renderFigure(
   const cx = Math.round(C + fs * (turned ? 0.85 : 0.6));
   if (flower) {
     // A flower's face is only its bead eyes and its mouth.
-  } else if (recipe.species === 'dwarf')
+  } else if (animal) sprite(features, ['NNN', '.N.'], cx - 1, 18 + h, { N: mix(INK, skin, 0.2) });
+  else if (recipe.species === 'dwarf')
     sprite(features, ['.N.', 'NnN'], cx - 1, 17 + h, {
       N: shade(skin, 0.84),
       n: shade(skin, 0.72),
