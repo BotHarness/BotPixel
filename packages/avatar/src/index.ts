@@ -1,5 +1,6 @@
 export type { PixelCell } from '@botharness/pixel-morph';
 export {
+  hairPieceStart,
   partToneColor,
   pixelFigure,
   pixelTileColor,
@@ -41,12 +42,18 @@ export {
   type PixelAvatarRecipeV2,
   type PixelAvatarRecipeV3,
   withHeadpiece,
+  withCustomPart,
+  wornPart,
+  CUSTOM_PART_KEYS,
+  type CustomPartKey,
 } from './recipe.js';
 export {
   MAX_PART_FIXED_COLORS,
   PART_LAYERS,
   PART_SLOTS,
   PART_TONES,
+  HAIR_PART_SLOTS,
+  isHairPartSlot,
   canonicalCustomPart,
   createCustomPart,
   customPartId,
@@ -64,6 +71,7 @@ export {
   type PartLayerName,
   type PartSlot,
   type PartTone,
+  type HairPartSlot,
   type PixelCustomPart,
 } from './part.js';
 export { seededRandom } from './random.js';
