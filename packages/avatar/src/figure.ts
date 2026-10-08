@@ -22,6 +22,7 @@ export type PixelGrid = Grid;
 export type PixelMouthState = 'saved' | 'closed' | 'half-open' | 'open';
 export interface PixelFigureOptions {
   mouthLayers?: boolean;
+  speechMouthVersion?: 1 | 2;
 }
 const blank = (): Grid => Array.from({ length: N }, () => Array<Cell>(N).fill(undefined));
 const ellipse =
@@ -1147,7 +1148,7 @@ export function pixelFigure(
           ['saved', MOUTHS[recipe.mouth]],
           ['closed', ['KKK']],
           ['half-open', ['KKK', 'MMM']],
-          ['open', ['.K.', 'KMK', '.K.']],
+          ['open', options.speechMouthVersion === 2 ? ['KMMMK', '.MMM.'] : ['.K.', 'KMK', '.K.']],
         ] satisfies readonly [PixelMouthState, readonly string[]][]
       )
         .map(

@@ -41,4 +41,25 @@ describe('optional speech mouth rig', () => {
       expect(JSON.stringify(recipe)).toBe(snapshot);
     }
   });
+
+  it('opts into a flatter full opening without changing the accepted speech layers or saved artwork', () => {
+    for (const recipe of [DEFAULT_RECIPE, ...AVATAR_PRESETS, detailedRecipe(DEFAULT_RECIPE)]) {
+      const options = { turns: AVATAR_TURNS, mouthLayers: true };
+      const original = pixelAvatarSvg(recipe, options);
+      const legacy = pixelAvatarSvg(recipe, { ...options, speechMouthVersion: 1 });
+      const natural = pixelAvatarSvg(recipe, { ...options, speechMouthVersion: 2 });
+      expect(legacy).toBe(original);
+      expect(natural).not.toBe(original);
+      const withoutOpen = (svg: string) =>
+        svg.replace(/<g data-avatar-mouth="open" opacity="0">.*?<\/g>/gu, '');
+      expect(withoutOpen(natural)).toBe(withoutOpen(original));
+      expect(pixelAvatarSvg(recipe, { speechMouthVersion: 2 })).toBe(pixelAvatarSvg(recipe));
+    }
+    const svg = pixelAvatarSvg(DEFAULT_RECIPE, { mouthLayers: true, speechMouthVersion: 2 });
+    const open = svg.match(/<g data-avatar-mouth="open" opacity="0">(.*?)<\/g>/u)![1]!;
+    expect(open).toContain('<rect x="14" y="20" width="1" height="1" fill="#7a2a38"/>');
+    expect(open).toContain('<rect x="15" y="20" width="3" height="1" fill="#b8415a"/>');
+    expect(open).toContain('<rect x="15" y="21" width="3" height="1" fill="#b8415a"/>');
+    expect(open).not.toContain('y="22"');
+  });
 });
