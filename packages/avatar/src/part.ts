@@ -12,6 +12,14 @@ export const PART_SLOTS = {
   leftSideHair: { width: 32, height: 32 },
   rightSideHair: { width: 32, height: 32 },
   backHair: { width: 32, height: 32 },
+  outfit: { width: 32, height: 32 },
+  accessory: { width: 32, height: 32 },
+  beard: { width: 32, height: 32 },
+  glasses: { width: 32, height: 32 },
+  nose: { width: 32, height: 32 },
+  cheeks: { width: 32, height: 32 },
+  petals: { width: 32, height: 32 },
+  flowerBase: { width: 32, height: 32 },
 } as const;
 export type PartSlot = keyof typeof PART_SLOTS;
 /**
@@ -22,6 +30,23 @@ export const HAIR_PART_SLOTS = ['bangs', 'leftSideHair', 'rightSideHair', 'backH
 export type HairPartSlot = (typeof HAIR_PART_SLOTS)[number];
 export const isHairPartSlot = (slot: PartSlot): slot is HairPartSlot =>
   (HAIR_PART_SLOTS as readonly string[]).includes(slot);
+/**
+ * Slots whose drawn part replaces a built-in part pixel for pixel: the part's cells are painted
+ * where the built-in part would be, and every cell shows its own color and tone.
+ */
+export const REPLACE_PART_SLOTS = [
+  'outfit',
+  'accessory',
+  'beard',
+  'glasses',
+  'nose',
+  'cheeks',
+  'petals',
+  'flowerBase',
+] as const;
+export type ReplacePartSlot = (typeof REPLACE_PART_SLOTS)[number];
+export const isReplacePartSlot = (slot: PartSlot): slot is ReplacePartSlot =>
+  (REPLACE_PART_SLOTS as readonly string[]).includes(slot);
 /** Tone steps on the rig's shade ramp: two darker, the color itself, two lighter. */
 export const PART_TONES = [-2, -1, 0, 1, 2] as const;
 export type PartTone = (typeof PART_TONES)[number];
@@ -32,7 +57,7 @@ export type PartCell = readonly [x: number, y: number, color: PartColor, tone: P
 export const PART_LAYERS = ['front', 'back'] as const;
 export type PartLayerName = (typeof PART_LAYERS)[number];
 /** Most fixed colors one part may use. */
-export const MAX_PART_FIXED_COLORS = 16;
+export const MAX_PART_FIXED_COLORS = 32;
 
 /**
  * A Human-drawn Custom Part. Its content is immutable and its identity is `customPartId`;
@@ -58,8 +83,7 @@ export function isPixelCustomPart(value: unknown): value is PixelCustomPart {
   const r = value as Record<string, unknown>;
   if (Object.keys(r).length !== 3 || !Object.hasOwn(PART_SLOTS, r['slot'] as string)) return false;
   const { width, height } = PART_SLOTS[r['slot'] as PartSlot];
-  if (isHairPartSlot(r['slot'] as PartSlot) && (r['back'] as unknown[] | undefined)?.length !== 0)
-    return false;
+  if (r['slot'] !== 'headpiece' && (r['back'] as unknown[] | undefined)?.length !== 0) return false;
   const fixed = new Set<string>();
   for (const name of PART_LAYERS) {
     const cells = r[name];
