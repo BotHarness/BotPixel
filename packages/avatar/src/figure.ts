@@ -1518,6 +1518,44 @@ export function hairPieceStart(
   return { slot, front, back: [] };
 }
 
+function cellSource(recipe: PixelAvatarRecipe): (c: string) => readonly [PartCell[2], PartTone] {
+  return (c) => {
+    for (const key of AVATAR_COLORS)
+      for (const tone of [0, -1, 1, -2, 2] as const)
+        if (TONES[tone](recipe[key].toLowerCase()) === c) return [key, tone];
+    return [c as PartCell[2], 0];
+  };
+}
+
+/**
+ * The headpiece as a Custom Part to start drawing from: the drawn headpiece worn, or the
+ * built-in headpiece flattened for this recipe in the front pose, its base on the back layer and
+ * the rest on the front layer, so an unchanged copy renders identically facing front.
+ */
+export function headpieceStart(recipe: PixelAvatarRecipe): {
+  slot: 'headpiece';
+  front: PartCell[];
+  back: PartCell[];
+} {
+  const worn = wornPart(recipe, 'headpiece');
+  if (worn) return { slot: 'headpiece', front: [...worn.front], back: [...worn.back] };
+  const style = builtInHeadpiece(recipe);
+  const behind = blank();
+  const over = blank();
+  if (style) drawHeadpiece(style, recipe, behind, over, 0, 0);
+  const source = cellSource(recipe);
+  const front: PartCell[] = [];
+  const back: PartCell[] = [];
+  for (let y = 0; y < 16; y++)
+    for (let x = 0; x < N; x++) {
+      const c = over[y]![x];
+      const b = behind[y]![x];
+      if (c) front.push([x, y, ...source(c)]);
+      if (b && b !== c) back.push([x, y, ...source(b)]);
+    }
+  return { slot: 'headpiece', front, back };
+}
+
 /**
  * The part in a replacement slot as a Custom Part to start drawing from: the drawn part worn
  * there, or the built-in part flattened for this recipe in the front pose. Each pixel becomes a
@@ -1543,12 +1581,7 @@ export function replacePartStart(
             : 'figure';
   const shown = renderFigure(recipe, 0, {}, new Set()).grids[layer];
   const without = renderFigure(recipe, 0, {}, new Set([slot])).grids[layer];
-  const source = (c: string): readonly [PartCell[2], PartTone] => {
-    for (const key of AVATAR_COLORS)
-      for (const tone of [0, -1, 1, -2, 2] as const)
-        if (TONES[tone](recipe[key].toLowerCase()) === c) return [key, tone];
-    return [c as PartCell[2], 0];
-  };
+  const source = cellSource(recipe);
   const front: PartCell[] = [];
   for (let y = 0; y < N; y++)
     for (let x = 0; x < N; x++) {

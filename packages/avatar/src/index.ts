@@ -1,6 +1,7 @@
 export type { PixelCell } from '@botharness/pixel-morph';
 export {
   hairPieceStart,
+  headpieceStart,
   replacePartStart,
   partToneColor,
   pixelFigure,

@@ -7,6 +7,7 @@ import {
   AVATAR_TURNS,
   DEFAULT_RECIPE,
   builtInHeadpiece,
+  headpieceStart,
   canonicalRecipe,
   hiddenChoices,
   isPixelAvatarRecipe,
@@ -147,6 +148,21 @@ describe('every hair piece colored and built-in headpieces (asset version 4)', (
     expect(tinted.length).toBeGreaterThan(0);
     expect(tinted.every((k) => Number(k.split(',')[1]) <= 5)).toBe(true);
     expect(hiddenChoices({ ...withSpecies(strand, 'flower') })).toContain('strand');
+  });
+
+  it('flattens a built-in headpiece into a Custom Part that renders identically facing front', () => {
+    for (const headpiece of AVATAR_HEADPIECES) {
+      const wearing = withBuiltInHeadpiece({ ...human, accessory: 'hairclip' }, headpiece);
+      const start = headpieceStart(wearing);
+      expect(start.front.length + start.back.length).toBeGreaterThan(0);
+      const copy = withCustomPart(wearing, 'headpiece', start);
+      expect(builtInHeadpiece(copy)).toBeUndefined();
+      expect(changed(copy, wearing)).toEqual([]);
+    }
+    const ears = headpieceStart(withBuiltInHeadpiece(human, 'catears'));
+    expect(ears.front.some(([, , color]) => color === 'hairColor')).toBe(true);
+    expect(headpieceStart(withCustomPart(human, 'headpiece', crown))).toEqual(crown);
+    expect(headpieceStart(human)).toEqual({ slot: 'headpiece', front: [], back: [] });
   });
 
   it('matches the version 4 golden output', () => {
