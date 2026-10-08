@@ -1,0 +1,172 @@
+{
+  "elf": {
+    "front": "5215edb346d77629",
+    "turns": "210e6ecb819b147b",
+    "mouths": "0ee8ce0e8e8911d9"
+  },
+  "dwarf": {
+    "front": "07f7085fb8193e96",
+    "turns": "22474f2c3aced89f",
+    "mouths": "fc88403e13a1f315"
+  },
+  "orc": {
+    "front": "840822625620149b",
+    "turns": "9119c3b1d43a9a0e",
+    "mouths": "9ed85c495e5a2bd5"
+  },
+  "flower": {
+    "front": "2d5a1fe217d5a685",
+    "turns": "e137cd0904bbb963",
+    "mouths": "4a18005fbfa96018"
+  },
+  "beard-short-round": {
+    "front": "1f02b7eee00f2cc0",
+    "turns": "7f8860471fd456c1",
+    "mouths": "09cd8dd63a670092"
+  },
+  "beard-short-square": {
+    "front": "fe388ce81f17c441",
+    "turns": "03cf0549feafedc0",
+    "mouths": "03064abd0584fb6e"
+  },
+  "beard-full-round": {
+    "front": "00c8c4c383c6a44e",
+    "turns": "e9a73a870c3b0792",
+    "mouths": "fdedb118d880acef"
+  },
+  "beard-full-square": {
+    "front": "64f2fc3bca17e36c",
+    "turns": "e05a54f8db2e13fe",
+    "mouths": "0f5fbfc04b13069b"
+  },
+  "beard-braided-round": {
+    "front": "caff515eafe82628",
+    "turns": "790a2002bc94d397",
+    "mouths": "fef8930d85fd2e99"
+  },
+  "beard-braided-square": {
+    "front": "6a6fbe19a176af42",
+    "turns": "8910eb9359293718",
+    "mouths": "9f3d7060f75f8654"
+  },
+  "outfit-armor": {
+    "front": "ccc1b18b36999f82",
+    "turns": "3058a63e7b6d50f8",
+    "mouths": "fc88403e13a1f315"
+  },
+  "outfit-robe": {
+    "front": "cf20c43748127470",
+    "turns": "a93f8ab2bab8503e",
+    "mouths": "fc88403e13a1f315"
+  },
+  "outfit-tunic": {
+    "front": "d9f910b06a8b6f71",
+    "turns": "c171777eab438686",
+    "mouths": "fc88403e13a1f315"
+  },
+  "outfit-cloak": {
+    "front": "d575fc517f876550",
+    "turns": "add8016a0bfec1b6",
+    "mouths": "fc88403e13a1f315"
+  },
+  "accessory-helmet": {
+    "front": "db5fc770c35b7e1a",
+    "turns": "d0dcbaac42b66278",
+    "mouths": "27defd729e331400"
+  },
+  "accessory-hood": {
+    "front": "066f3563fbc4ad43",
+    "turns": "b6436098c853a1ac",
+    "mouths": "cc9c702d8cc945c4"
+  },
+  "flower-trumpet-leaves": {
+    "front": "2d5a1fe217d5a685",
+    "turns": "e137cd0904bbb963",
+    "mouths": "4a18005fbfa96018"
+  },
+  "flower-trumpet-pot": {
+    "front": "00a8e10191ba9a20",
+    "turns": "3ea98458d8ac9dda",
+    "mouths": "49e0c972604878ba"
+  },
+  "flower-daisy-leaves": {
+    "front": "eca5f7f645baa53f",
+    "turns": "e7258b550e353fe6",
+    "mouths": "62d327d25401dac2"
+  },
+  "flower-daisy-pot": {
+    "front": "3d41fdd8a8c560fe",
+    "turns": "21e9f33479e9df06",
+    "mouths": "ca198e261aab8f5f"
+  },
+  "flower-sunflower-leaves": {
+    "front": "d94e4e6536f9de8c",
+    "turns": "85c3802a2d11a5bb",
+    "mouths": "3ca3b8c9f71f50a1"
+  },
+  "flower-sunflower-pot": {
+    "front": "dbf1af8e36481e2c",
+    "turns": "dc62080ed66e09d4",
+    "mouths": "fb3d9b3201e38bcd"
+  },
+  "flower-tulip-leaves": {
+    "front": "588383a46e642f69",
+    "turns": "0b28cca2ab1186ba",
+    "mouths": "d8d52209f7d6d7bb"
+  },
+  "flower-tulip-pot": {
+    "front": "bc25b7957e8fe5e6",
+    "turns": "957d13f07762e5a0",
+    "mouths": "d8d52209f7d6d7bb"
+  },
+  "flower-sakura-leaves": {
+    "front": "76c3f187c3b3a50e",
+    "turns": "89915f9f5bdfaf8f",
+    "mouths": "eeda49701a55e2bc"
+  },
+  "flower-sakura-pot": {
+    "front": "747bb90d5a473e50",
+    "turns": "1fbeaea37de6a931",
+    "mouths": "cab3c5244c660713"
+  },
+  "flower-two-tone": {
+    "front": "62141d463e196c07",
+    "turns": "2d42e3f9075c57db",
+    "mouths": "5b997c26249730e9"
+  },
+  "seed-v2-Ada": {
+    "front": "2c83354c4f2bfc1d",
+    "turns": "53412b05f6d16e8a",
+    "mouths": "1cafd08079c3aa6d"
+  },
+  "seed-v2-Grace": {
+    "front": "2e759f757e74ea8c",
+    "turns": "0023b4ee4eeb42dc",
+    "mouths": "3507341cffa95b6c"
+  },
+  "seed-v2-Linus": {
+    "front": "148ad21f26cd646f",
+    "turns": "bf9fdac6029d23c9",
+    "mouths": "17c8adf1b547264d"
+  },
+  "seed-v2-DeepSeekBot": {
+    "front": "ee9bd7d0074b2970",
+    "turns": "b29ceaeb4f4b892e",
+    "mouths": "6e1c2b03e91e0f37"
+  },
+  "seed-v2-Gimli": {
+    "front": "e96ad6a0c3a2bbd5",
+    "turns": "bba0f25e8f34f527",
+    "mouths": "1bc89d032efe42fb"
+  },
+  "seed-v2-Daisy": {
+    "front": "5e91746f1f3ac026",
+    "turns": "81cbbd98734b2d6e",
+    "mouths": "cc834e3d2d0d1124"
+  },
+  "dwarf-extremes": {
+    "front": "74207120892ffbe9",
+    "turns": "764841ff6d7195db",
+    "mouths": "0d5a78f1f62a5521"
+  }
+}
