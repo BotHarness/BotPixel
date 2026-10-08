@@ -1,6 +1,7 @@
 export type { PixelCell } from '@botharness/pixel-morph';
 export {
   hairPieceStart,
+  replacePartStart,
   partToneColor,
   pixelFigure,
   pixelTileColor,
@@ -53,7 +54,9 @@ export {
   PART_SLOTS,
   PART_TONES,
   HAIR_PART_SLOTS,
+  REPLACE_PART_SLOTS,
   isHairPartSlot,
+  isReplacePartSlot,
   canonicalCustomPart,
   createCustomPart,
   customPartId,
@@ -72,6 +75,7 @@ export {
   type PartSlot,
   type PartTone,
   type HairPartSlot,
+  type ReplacePartSlot,
   type PixelCustomPart,
 } from './part.js';
 export { seededRandom } from './random.js';

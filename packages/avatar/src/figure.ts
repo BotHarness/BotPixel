@@ -1,6 +1,20 @@
 import { escapeAttribute, type PixelCell } from '@botharness/pixel-morph';
-import { HAIR_PART_SLOTS, type HairPartSlot, type PartCell, type PartTone } from './part.js';
-import { AVATAR_PIECE_COLORS, detailedRecipe, wornPart, type PixelAvatarRecipe } from './recipe.js';
+import {
+  HAIR_PART_SLOTS,
+  REPLACE_PART_SLOTS,
+  type HairPartSlot,
+  type PartCell,
+  type PartTone,
+  type ReplacePartSlot,
+} from './part.js';
+import {
+  AVATAR_COLORS,
+  AVATAR_PIECE_COLORS,
+  detailedRecipe,
+  hiddenChoices,
+  wornPart,
+  type PixelAvatarRecipe,
+} from './recipe.js';
 
 type Cell = string | undefined;
 type Grid = Cell[][];
@@ -863,6 +877,24 @@ export function pixelFigure(
   yawDeg: number,
   options: PixelFigureOptions = {},
 ): { tile: string; body: string; head: string; cells: PixelCell[] } {
+  const { grids: _, ...out } = renderFigure(recipe, yawDeg, options, new Set());
+  return out;
+}
+
+const FACE_SLOTS: readonly ReplacePartSlot[] = ['nose', 'cheeks', 'glasses'];
+
+function renderFigure(
+  recipe: Recipe,
+  yawDeg: number,
+  options: PixelFigureOptions,
+  omit: ReadonlySet<ReplacePartSlot>,
+): {
+  tile: string;
+  body: string;
+  head: string;
+  cells: PixelCell[];
+  grids: { figure: Grid; features: Grid; glasses: Grid; back: Grid; body: Grid };
+} {
   const yaw = (yawDeg * Math.PI) / 180;
   const sinY = Math.sin(yaw);
   const s = Math.round(sinY * 3);
@@ -881,9 +913,41 @@ export function pixelFigure(
       }
     : front;
   const flower = recipe.species === 'flower';
-  const covered = recipe.accessory === 'helmet' || recipe.accessory === 'hood';
+  const hiddenNow = hiddenChoices(recipe);
+  const drawnParts = new Map(
+    REPLACE_PART_SLOTS.flatMap((slot) => {
+      const part = wornPart(recipe, slot);
+      const shown = slot === 'petals' || slot === 'flowerBase' ? flower : !hiddenNow.includes(slot);
+      return part && shown ? [[slot, part.front] as const] : [];
+    }),
+  );
+  const skip = (slot: ReplacePartSlot) => omit.has(slot) || drawnParts.has(slot);
+  const covered =
+    !skip('accessory') && (recipe.accessory === 'helmet' || recipe.accessory === 'hood');
   const bare: Mask = () => false;
-  const petalRing = flower ? petals(recipe.petals ?? 'trumpet', s) : bare;
+  const petalRing = flower && !skip('petals') ? petals(recipe.petals ?? 'trumpet', s) : bare;
+  const faceShift = Math.round(fs * 0.6);
+  const mouthCells = new Set<string>();
+  for (const rows of [...Object.values(MOUTHS), ['.K.', 'KMK', '.K.']]) {
+    const left = Math.round(C - 0.5 + fs * 0.6 - (rows[0]!.length - 1) / 2);
+    rows.forEach((row, dy) =>
+      [...row].forEach((code, dx) => {
+        if (code !== '.') mouthCells.add(`${left + dx},${20 + (recipe.height ?? 0) + dy}`);
+      }),
+    );
+  }
+  const mouthBox = (x: number, y: number) => mouthCells.has(`${x},${y}`);
+  const overlay = (grid: Grid, slot: ReplacePartSlot, keepOutMouth = false) => {
+    const cells = drawnParts.get(slot);
+    if (!cells) return;
+    const shift = FACE_SLOTS.includes(slot) ? faceShift : s;
+    for (const [x, y, color, tone] of cells) {
+      const px = x + shift;
+      if (px < 0 || px >= N || (keepOutMouth && mouthBox(px, y))) continue;
+      const base = color.startsWith('#') ? color.toLowerCase() : recipe[color as 'hairColor'];
+      grid[y]![px] = TONES[tone](base);
+    }
+  };
   const builtin: ReturnType<typeof detailedHair> = flower
     ? {
         back: petalRing,
@@ -946,8 +1010,13 @@ export function pixelFigure(
       );
 
   const body = blank();
-  if (flower) flowerBase(recipe, body, s);
-  else outfit(recipe, body, s);
+  if (flower) {
+    if (!skip('flowerBase')) flowerBase(recipe, body, s);
+    overlay(body, 'flowerBase');
+  } else {
+    if (!skip('outfit')) outfit(recipe, body, s);
+    overlay(body, 'outfit');
+  }
 
   const back = blank();
   if (flower) {
@@ -982,12 +1051,13 @@ export function pixelFigure(
       if (cell.x >= 0 && cell.x < N) grid[cell.y]![cell.x] = cell.c;
   };
   placeCells(back, inked('backHair'), false);
+  overlay(back, 'petals');
   if (headpiece) placeCells(back, headpiece.back);
 
   const head = blank();
   paint(head, face, skin);
   const h = recipe.height ?? 0;
-  if (recipe.beard && !flower) {
+  if (recipe.beard && !flower && !skip('beard')) {
     const centre = C + fs * 0.6;
     const mouthX = Math.round(C - 0.5 + fs * 0.6);
     const chin: Mask = (x, y) => face(x, y) || face(x, y - 2);
@@ -1040,7 +1110,7 @@ export function pixelFigure(
   if (!pointed && !flower) paint(head, masks.front, hairColor);
   for (const [x, y] of masks.ties ?? [])
     sprite(back, ['T'], Math.round(x), y, { T: shade(recipe.shirtColor, 0.8) });
-  if (!flower) accessory(recipe, head, s, face);
+  if (!flower && !skip('accessory')) accessory(recipe, head, s, face);
 
   const shadeHair = (g: Grid) => {
     const out = g.map((r) => [...r]);
@@ -1094,11 +1164,14 @@ export function pixelFigure(
     return out;
   };
 
+  const drawnOver = blank();
+  overlay(drawnOver, 'beard', true);
+  overlay(drawnOver, 'accessory');
   const crown = blank();
   placeCells(crown, inked('all-front'), false);
   if (headpiece) placeCells(crown, headpiece.front);
   const figure = blank();
-  for (const layer of [back, body, shadeHair(head), crown])
+  for (const layer of [back, body, shadeHair(head), drawnOver, crown])
     for (let y = 0; y < N; y++)
       for (let x = 0; x < N; x++) if (layer[y]![x]) figure[y]![x] = layer[y]![x];
 
@@ -1168,6 +1241,7 @@ export function pixelFigure(
       N: shade(skin, 0.84),
       n: shade(skin, 0.72),
     });
+  else if (skip('nose')) overlay(features, 'nose', true);
   else if (recipe.nose === 'dot') sprite(features, ['N'], cx, 18 + h, { N: shade(skin, 0.78) });
   else if (recipe.nose === 'button') sprite(features, ['N'], cx, 18 + h, { N: shade(skin, 0.88) });
   else if (recipe.nose === 'line')
@@ -1187,11 +1261,12 @@ export function pixelFigure(
     if (recipe.species === 'orc')
       for (const tx of [Math.round(mx - 2.5), Math.round(mx + 2.5)])
         sprite(layer, ['T', 'T'], tx, 20 + h, { T: TUSK });
-    if (recipe.cheeks === 'blush' && !flower) {
+    if (skip('cheeks')) overlay(layer, 'cheeks', true);
+    if (recipe.cheeks === 'blush' && !flower && !skip('cheeks')) {
       sprite(layer, ['PP'], left.x - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
       sprite(layer, ['PP'], right.x + right.w - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
     }
-    if (recipe.cheeks === 'freckles' && !flower) {
+    if (recipe.cheeks === 'freckles' && !flower && !skip('cheeks')) {
       sprite(layer, ['F.F'], left.x, 19 + h, { F: shade(skin, 0.7) });
       sprite(layer, ['F.F'], right.x + 1, 19 + h, { F: shade(skin, 0.7) });
     }
@@ -1224,7 +1299,8 @@ export function pixelFigure(
       },
       INK,
     );
-  const lenses = flower ? 'none' : recipe.glasses;
+  const lenses = flower || skip('glasses') ? 'none' : recipe.glasses;
+  overlay(glasses, 'glasses', true);
   if (lenses === 'round' || lenses === 'square') {
     frame(left.x, left.w, lenses === 'round');
     frame(right.x, right.w, lenses === 'round');
@@ -1253,7 +1329,8 @@ export function pixelFigure(
     const variant = blank();
     const plain = { ...recipe, hairColor: color };
     for (const k of AVATAR_PIECE_COLORS) delete plain[k];
-    for (const cell of pixelFigure(plain, yawDeg).cells) variant[cell.y]![cell.x] = cell.c;
+    for (const cell of renderFigure(plain, yawDeg, {}, omit).cells)
+      variant[cell.y]![cell.x] = cell.c;
     const near = (x: number, y: number) =>
       mask(x, y) || mask(x - 1, y) || mask(x + 1, y) || mask(x, y - 1) || mask(x, y + 1);
     for (let y = 0; y < N; y++)
@@ -1267,7 +1344,8 @@ export function pixelFigure(
     for (let x = 0; x < N; x++) {
       const c = full[y]![x];
       if (!c) continue;
-      if (y >= 22 && !head[y]![x] && !back[y]![x] && !crown[y]![x]) bodyCells[y]![x] = c;
+      if (y >= 22 && !head[y]![x] && !back[y]![x] && !crown[y]![x] && !drawnOver[y]![x])
+        bodyCells[y]![x] = c;
       else headCells[y]![x] = c;
     }
   const cells: PixelCell[] = [];
@@ -1277,6 +1355,7 @@ export function pixelFigure(
       if (c) cells.push({ x, y, c });
     }
   return {
+    grids: { figure, features: savedFeatures, glasses, back, body },
     cells,
     tile: `<rect width="32" height="32" rx="6" fill="${pixelTileColor(recipe.hairColor)}"/>`,
     body: `<g class="bh-illustrated-body">${rects(bodyCells)}</g>`,
@@ -1311,5 +1390,45 @@ export function hairPieceStart(
     for (let x = 0; x < N; x++)
       if (ties.has(`${x},${y}`)) front.push([x, y, 'shirtColor', -1]);
       else if (mask(x, y)) front.push([x, y, 'hairColor', 0]);
+  return { slot, front, back: [] };
+}
+
+/**
+ * The part in a replacement slot as a Custom Part to start drawing from: the drawn part worn
+ * there, or the built-in part flattened for this recipe in the front pose. Each pixel becomes a
+ * color slot and tone when it is exactly one, so it recolors with the Avatar, and a fixed color
+ * otherwise; an unchanged copy renders identically. A flattened helmet or hood no longer hides
+ * the hair: only the built-in ones do.
+ */
+export function replacePartStart(
+  recipe: PixelAvatarRecipe,
+  slot: ReplacePartSlot,
+): { slot: ReplacePartSlot; front: PartCell[]; back: PartCell[] } {
+  const worn = wornPart(recipe, slot);
+  if (worn) return { slot, front: [...worn.front], back: [] };
+  const layer =
+    slot === 'glasses'
+      ? 'glasses'
+      : slot === 'nose' || slot === 'cheeks'
+        ? 'features'
+        : slot === 'petals'
+          ? 'back'
+          : slot === 'outfit' || slot === 'flowerBase'
+            ? 'body'
+            : 'figure';
+  const shown = renderFigure(recipe, 0, {}, new Set()).grids[layer];
+  const without = renderFigure(recipe, 0, {}, new Set([slot])).grids[layer];
+  const source = (c: string): readonly [PartCell[2], PartTone] => {
+    for (const key of AVATAR_COLORS)
+      for (const tone of [0, -1, 1, -2, 2] as const)
+        if (TONES[tone](recipe[key].toLowerCase()) === c) return [key, tone];
+    return [c as PartCell[2], 0];
+  };
+  const front: PartCell[] = [];
+  for (let y = 0; y < N; y++)
+    for (let x = 0; x < N; x++) {
+      const c = shown[y]![x];
+      if (c && c !== without[y]![x]) front.push([x, y, ...source(c)]);
+    }
   return { slot, front, back: [] };
 }
