@@ -10,6 +10,9 @@ export default defineConfig({
       '@botharness/pixel-avatar': fileURLToPath(
         new URL('./packages/avatar/src/index.ts', import.meta.url),
       ),
+      '@botharness/pixel-banner': fileURLToPath(
+        new URL('./packages/banner/src/index.ts', import.meta.url),
+      ),
     },
   },
   test: {

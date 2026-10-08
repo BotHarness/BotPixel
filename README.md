@@ -2,12 +2,13 @@
 
 # BotPixel
 
-Pixel art that changes shape. Two small, dependency-free packages from [BotHarness](https://github.com/BotHarness/BotHarness):
+Pixel art that changes shape. Three small, dependency-free packages from [BotHarness](https://github.com/BotHarness/BotHarness):
 
 | Package                                       | What it does                                                                                                                                                                      |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`@botharness/pixel-morph`](packages/morph)   | Morphs any set of pixels into any other: every pixel hops along a short arc to a partner and snaps to the grid. Works on plain `{ x, y, c }` cells, so it is not tied to avatars. |
 | [`@botharness/pixel-avatar`](packages/avatar) | Seeded, editable 32×32 chibi pixel avatars, plus 16 state symbols (thinking, reading, editing, searching…) the avatar can morph into while an agent works.                        |
+| [`@botharness/pixel-banner`](packages/banner) | Seeded 3:1 pixel nature banners for profile headers in ten scenes (spring, summer, autumn, winter, sea, mountain, desert, forest, night sky, space), 1500×500 RGBA.               |
 
 ```bash
 npm install @botharness/pixel-avatar
@@ -57,17 +58,24 @@ A recipe is plain JSON (`head`, `hair`, `eyes`, `outfit`, `accessory`, colours�
 
 Hosts add their own state symbols with `symbolArtCells(rows, color)`, which draws 24×24 character art (`A` body, `H` highlight) in the built-in style.
 
+## Profile banners
+
+`seededBannerRecipe(name)` picks a scene and a seed; `pixelBannerImage(recipe)` returns 1500×500 RGBA pixels, scaled ×10 from a 150×50 drawing with no smoothing. Every scene, on a light and a dark page:
+
+<p align="center"><img src="assets/banner-scenes-light.png" alt="All ten banner scenes on a light page" width="49%"> <img src="assets/banner-scenes-dark.png" alt="All ten banner scenes on a dark page" width="49%"></p>
+
 ## Contributing
 
 ```bash
 pnpm install
 pnpm verify   # format, lint, typecheck, test
 pnpm build
-pnpm assets  # re-render the README banner and GIFs (needs ffmpeg)
+pnpm assets  # re-render the README banner, GIFs and banner scenes (needs ffmpeg)
 ```
 
 - New eyes, brows, mouths and symbols are character art: add rows, and the diff shows the picture.
 - `packages/avatar/test/fixtures/botharness-golden.json` locks the output of every existing option and seed. Saved avatars must not change, so a PR that breaks it needs a new recipe version, not a new fixture.
+- `packages/banner/test/fixtures/banner-golden.json` does the same for every banner scene.
 
 ## License
 
