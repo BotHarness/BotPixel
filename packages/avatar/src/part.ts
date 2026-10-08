@@ -2,13 +2,26 @@ import { AVATAR_COLORS, type AvatarColor } from './recipe.js';
 
 /**
  * Custom Part slots. A headpiece covers the top of the tile, around the hair: its back layer is
- * drawn behind the hair and its front layer over it. Cells are in tile coordinates, so the
- * Avatar centerline sits between x = 15 and x = 16.
+ * drawn behind the hair and its front layer over it. Hair slots replace one built-in hair piece
+ * and use only the front layer. Cells are in tile coordinates, so the Avatar centerline sits
+ * between x = 15 and x = 16.
  */
 export const PART_SLOTS = {
   headpiece: { width: 32, height: 16 },
+  bangs: { width: 32, height: 32 },
+  leftSideHair: { width: 32, height: 32 },
+  rightSideHair: { width: 32, height: 32 },
+  backHair: { width: 32, height: 32 },
 } as const;
 export type PartSlot = keyof typeof PART_SLOTS;
+/**
+ * Hair slots. In a hair part, a `hairColor` cell at tone 0 is live hair: it is shaded with the
+ * rest of the hair, exactly like a built-in piece. Every other cell shows its own color.
+ */
+export const HAIR_PART_SLOTS = ['bangs', 'leftSideHair', 'rightSideHair', 'backHair'] as const;
+export type HairPartSlot = (typeof HAIR_PART_SLOTS)[number];
+export const isHairPartSlot = (slot: PartSlot): slot is HairPartSlot =>
+  (HAIR_PART_SLOTS as readonly string[]).includes(slot);
 /** Tone steps on the rig's shade ramp: two darker, the color itself, two lighter. */
 export const PART_TONES = [-2, -1, 0, 1, 2] as const;
 export type PartTone = (typeof PART_TONES)[number];
@@ -45,6 +58,8 @@ export function isPixelCustomPart(value: unknown): value is PixelCustomPart {
   const r = value as Record<string, unknown>;
   if (Object.keys(r).length !== 3 || !Object.hasOwn(PART_SLOTS, r['slot'] as string)) return false;
   const { width, height } = PART_SLOTS[r['slot'] as PartSlot];
+  if (isHairPartSlot(r['slot'] as PartSlot) && (r['back'] as unknown[] | undefined)?.length !== 0)
+    return false;
   const fixed = new Set<string>();
   for (const name of PART_LAYERS) {
     const cells = r[name];
