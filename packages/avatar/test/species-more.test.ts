@@ -54,6 +54,11 @@ describe('medieval species, beards, outfits and headwear', () => {
       'backHair',
       'outfit',
       'accessory',
+      'eyes',
+      'brows',
+      'nose',
+      'cheeks',
+      'glasses',
       'beard',
     ]);
   });
@@ -74,6 +79,22 @@ describe('medieval species, beards, outfits and headwear', () => {
       bangs: 'messy' as const,
     };
     expect(pixelAvatarSvg(dressed)).toBe(pixelAvatarSvg(flower));
+  });
+
+  it('gives a flower bead eyes instead of the saved eyes, brows, nose, cheeks and glasses', () => {
+    const plain = pixelAvatarSvg(flower);
+    for (const [part, value] of [
+      ['eyes', 'sparkle'],
+      ['brows', 'angry'],
+      ['nose', 'line'],
+      ['cheeks', 'freckles'],
+      ['glasses', 'shades'],
+    ] as const)
+      expect(pixelAvatarSvg({ ...flower, [part]: value }), part).toBe(plain);
+    for (const state of ['closed', 'half-open', 'open'])
+      expect(pixelFigure(flower, 0, { mouthLayers: true }).head).toContain(
+        `data-avatar-mouth="${state}"`,
+      );
   });
 
   it('leaves every speaking mouth visible through a beard', () => {

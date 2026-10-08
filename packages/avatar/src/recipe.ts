@@ -169,7 +169,7 @@ export const AVATAR_PARTS_V2 = {
 /** Optional asset version 2 parts; an absent part is not drawn (or uses the first choice). */
 export const AVATAR_EXTRA_PARTS = {
   beard: ['short', 'full', 'braided'],
-  petals: ['daisy', 'sunflower', 'tulip', 'sakura'],
+  petals: ['trumpet', 'daisy', 'sunflower', 'tulip', 'sakura'],
   flowerBase: ['leaves', 'pot'],
 } as const;
 export type AvatarExtraPart = keyof typeof AVATAR_EXTRA_PARTS;
@@ -305,7 +305,17 @@ const HAIR_PIECES = ['bangs', 'sideHair', 'rightSideHair', 'backHair'] as const;
  */
 export function hiddenChoices(recipe: PixelAvatarRecipe): readonly string[] {
   if (recipe.species === 'flower')
-    return [...HAIR_PIECES, 'outfit', 'accessory', ...(recipe.beard ? ['beard'] : [])];
+    return [
+      ...HAIR_PIECES,
+      'outfit',
+      'accessory',
+      'eyes',
+      'brows',
+      'nose',
+      'cheeks',
+      'glasses',
+      ...(recipe.beard ? ['beard'] : []),
+    ];
   const hidden: string[] = [];
   if (recipe.accessory === 'helmet' || recipe.accessory === 'hood') hidden.push(...HAIR_PIECES);
   if (recipe.species === 'dwarf') hidden.push('nose');

@@ -782,6 +782,10 @@ function petals(style: NonNullable<Recipe['petals']>, s: number): Mask {
         (ellipse(cx - 6.5, cy - 3, 4.5, 7.5)(x, y) ||
           ellipse(cx + 6.5, cy - 3, 4.5, 7.5)(x, y) ||
           ellipse(cx, cy - 6, 5, 8)(x, y));
+    case 'trumpet':
+      return (x, y) =>
+        ellipse(cx, cy - 0.5, 11.6, 10.4)(x, y) ||
+        (y <= cy - 6 && ellipse(cx, cy - 3, 13, 8.6)(x, y));
     case 'sakura':
       return (x, y) =>
         ring(5, 8.6, 4.6, 3.8, -Math.PI / 2)(x, y) && !ring(5, 13.4, 1.4, 1.4, -Math.PI / 2)(x, y);
@@ -858,7 +862,7 @@ export function pixelFigure(
   const flower = recipe.species === 'flower';
   const covered = recipe.accessory === 'helmet' || recipe.accessory === 'hood';
   const bare: Mask = () => false;
-  const petalRing = flower ? petals(recipe.petals ?? 'daisy', s) : bare;
+  const petalRing = flower ? petals(recipe.petals ?? 'trumpet', s) : bare;
   const masks: ReturnType<typeof detailedHair> = flower
     ? {
         back: petalRing,
@@ -1038,20 +1042,29 @@ export function pixelFigure(
     I: recipe.eyeColor,
     L: mix(recipe.eyeColor, WHITE, 0.45),
   };
-  const style = EYES[recipe.eyes];
-  const extra = style[0]!.length - 4;
-  sprite(eyes, fit(style, left.w + extra), left.x - extra, eyeTop, pal);
-  sprite(
-    eyes,
-    recipe.eyes === 'wink' ? fit(CLOSED, right.w) : fit(style, right.w + extra),
-    right.x,
-    eyeTop,
-    pal,
-    true,
-  );
-  sprite(closed, fit(CLOSED, left.w), left.x, eyeTop, pal);
-  sprite(closed, fit(CLOSED, right.w), right.x, eyeTop, pal, true);
-  const browRows = BROWS[recipe.brows];
+  if (flower) {
+    const centre = Math.round(C + fs * 0.6);
+    const bead = { K: '#1d1b22', W: WHITE };
+    for (const ex of [centre - 3, centre + 1]) {
+      sprite(eyes, ['KK', 'KW', 'KK', 'KK'], ex, eyeTop - 1, bead);
+      sprite(closed, ['..', '..', 'KK', '..'], ex, eyeTop - 1, bead);
+    }
+  } else {
+    const style = EYES[recipe.eyes];
+    const extra = style[0]!.length - 4;
+    sprite(eyes, fit(style, left.w + extra), left.x - extra, eyeTop, pal);
+    sprite(
+      eyes,
+      recipe.eyes === 'wink' ? fit(CLOSED, right.w) : fit(style, right.w + extra),
+      right.x,
+      eyeTop,
+      pal,
+      true,
+    );
+    sprite(closed, fit(CLOSED, left.w), left.x, eyeTop, pal);
+    sprite(closed, fit(CLOSED, right.w), right.x, eyeTop, pal, true);
+  }
+  const browRows = flower ? [] : BROWS[recipe.brows];
   if (browRows.length) {
     sprite(features, fit(browRows, left.w), left.x, eyeTop - 2, { B: shade(hairColor, 0.55) });
     sprite(
@@ -1064,7 +1077,9 @@ export function pixelFigure(
     );
   }
   const cx = Math.round(C + fs * (turned ? 0.85 : 0.6));
-  if (recipe.species === 'dwarf')
+  if (flower) {
+    // A flower's face is only its bead eyes and its mouth.
+  } else if (recipe.species === 'dwarf')
     sprite(features, ['.N.', 'NnN'], cx - 1, 17 + h, {
       N: shade(skin, 0.84),
       n: shade(skin, 0.72),
@@ -1088,11 +1103,11 @@ export function pixelFigure(
     if (recipe.species === 'orc')
       for (const tx of [Math.round(mx - 2.5), Math.round(mx + 2.5)])
         sprite(layer, ['T', 'T'], tx, 20 + h, { T: TUSK });
-    if (recipe.cheeks === 'blush') {
+    if (recipe.cheeks === 'blush' && !flower) {
       sprite(layer, ['PP'], left.x - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
       sprite(layer, ['PP'], right.x + right.w - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
     }
-    if (recipe.cheeks === 'freckles') {
+    if (recipe.cheeks === 'freckles' && !flower) {
       sprite(layer, ['F.F'], left.x, 19 + h, { F: shade(skin, 0.7) });
       sprite(layer, ['F.F'], right.x + 1, 19 + h, { F: shade(skin, 0.7) });
     }
@@ -1125,12 +1140,13 @@ export function pixelFigure(
       },
       INK,
     );
-  if (recipe.glasses === 'round' || recipe.glasses === 'square') {
-    frame(left.x, left.w, recipe.glasses === 'round');
-    frame(right.x, right.w, recipe.glasses === 'round');
+  const lenses = flower ? 'none' : recipe.glasses;
+  if (lenses === 'round' || lenses === 'square') {
+    frame(left.x, left.w, lenses === 'round');
+    frame(right.x, right.w, lenses === 'round');
     paint(glasses, (x, y) => y === eyeTop + 1 && x > left.x + left.w && x < right.x - 1, INK);
   }
-  if (recipe.glasses === 'shades') {
+  if (lenses === 'shades') {
     for (const e of [left, right])
       paint(
         glasses,
@@ -1140,7 +1156,7 @@ export function pixelFigure(
     paint(glasses, (x, y) => y === eyeTop && x > left.x + left.w && x < right.x - 1, INK);
     for (const e of [left, right]) sprite(glasses, ['W'], e.x, eyeTop, { W: '#7d7b88' });
   }
-  if (recipe.glasses === 'monocle') {
+  if (lenses === 'monocle') {
     frame(right.x, right.w, true);
     sprite(glasses, ['G', 'G', 'G'], right.x + right.w, eyeTop + 5, { G: GOLD });
   }

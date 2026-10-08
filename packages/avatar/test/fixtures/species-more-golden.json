@@ -15,9 +15,9 @@
     "mouths": "9ed85c495e5a2bd5"
   },
   "flower": {
-    "front": "f9c01acc632e4f60",
-    "turns": "c7c9cbec70b1db20",
-    "mouths": "60bf1d2ed441e813"
+    "front": "2d5a1fe217d5a685",
+    "turns": "e137cd0904bbb963",
+    "mouths": "4a18005fbfa96018"
   },
   "beard-short-round": {
     "front": "1f02b7eee00f2cc0",
@@ -79,50 +79,60 @@
     "turns": "b6436098c853a1ac",
     "mouths": "cc9c702d8cc945c4"
   },
+  "flower-trumpet-leaves": {
+    "front": "2d5a1fe217d5a685",
+    "turns": "e137cd0904bbb963",
+    "mouths": "4a18005fbfa96018"
+  },
+  "flower-trumpet-pot": {
+    "front": "00a8e10191ba9a20",
+    "turns": "3ea98458d8ac9dda",
+    "mouths": "49e0c972604878ba"
+  },
   "flower-daisy-leaves": {
-    "front": "f9c01acc632e4f60",
-    "turns": "c7c9cbec70b1db20",
-    "mouths": "60bf1d2ed441e813"
+    "front": "eca5f7f645baa53f",
+    "turns": "e7258b550e353fe6",
+    "mouths": "62d327d25401dac2"
   },
   "flower-daisy-pot": {
-    "front": "108a550b214cf6ce",
-    "turns": "e01a84cdeec5689e",
-    "mouths": "aaa80df5b092217e"
+    "front": "3d41fdd8a8c560fe",
+    "turns": "21e9f33479e9df06",
+    "mouths": "ca198e261aab8f5f"
   },
   "flower-sunflower-leaves": {
-    "front": "8b9e4e305e51368f",
-    "turns": "72b3e432388ab241",
-    "mouths": "0a694a9eed210aec"
+    "front": "d94e4e6536f9de8c",
+    "turns": "85c3802a2d11a5bb",
+    "mouths": "3ca3b8c9f71f50a1"
   },
   "flower-sunflower-pot": {
-    "front": "2161b31b5ed0dcda",
-    "turns": "4e6454723dd5a26a",
-    "mouths": "53a90311dc500685"
+    "front": "dbf1af8e36481e2c",
+    "turns": "dc62080ed66e09d4",
+    "mouths": "fb3d9b3201e38bcd"
   },
   "flower-tulip-leaves": {
-    "front": "c7048c3ed1ea478e",
-    "turns": "6ff47e386fd351c7",
-    "mouths": "f062601bc33b553b"
+    "front": "588383a46e642f69",
+    "turns": "0b28cca2ab1186ba",
+    "mouths": "d8d52209f7d6d7bb"
   },
   "flower-tulip-pot": {
-    "front": "c212a03195cdea90",
-    "turns": "924d3e3e5d7b2508",
-    "mouths": "f062601bc33b553b"
+    "front": "bc25b7957e8fe5e6",
+    "turns": "957d13f07762e5a0",
+    "mouths": "d8d52209f7d6d7bb"
   },
   "flower-sakura-leaves": {
-    "front": "1f84989f445e42b1",
-    "turns": "fa9062085815c6d2",
-    "mouths": "5e1e9a4412658ca9"
+    "front": "76c3f187c3b3a50e",
+    "turns": "89915f9f5bdfaf8f",
+    "mouths": "eeda49701a55e2bc"
   },
   "flower-sakura-pot": {
-    "front": "45c303ee5ba66025",
-    "turns": "a0a55dc1f7d694cf",
-    "mouths": "08b9c971b6d0b6ae"
+    "front": "747bb90d5a473e50",
+    "turns": "1fbeaea37de6a931",
+    "mouths": "cab3c5244c660713"
   },
   "flower-two-tone": {
-    "front": "7eb3540da7a2954b",
-    "turns": "cc3ecdca62082d93",
-    "mouths": "e236ed1199967f8a"
+    "front": "62141d463e196c07",
+    "turns": "2d42e3f9075c57db",
+    "mouths": "5b997c26249730e9"
   },
   "dwarf-extremes": {
     "front": "74207120892ffbe9",
