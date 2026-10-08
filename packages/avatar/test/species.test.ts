@@ -44,6 +44,15 @@ describe('asset version 2 recipes', () => {
     expect(isPixelAvatarRecipe(v1)).toBe(true);
   });
 
+  it('types version 2 recipes so they carry what validation requires', () => {
+    // @ts-expect-error a version 2 recipe needs a species, split hair and geometry
+    const missing: PixelAvatarRecipe = { ...DEFAULT_RECIPE, assetVersion: 2 };
+    expect(isPixelAvatarRecipe(missing)).toBe(false);
+    // @ts-expect-error species belongs to version 2 only
+    const stray: PixelAvatarRecipe = { ...DEFAULT_RECIPE, species: 'goblin' };
+    expect(isPixelAvatarRecipe(stray)).toBe(false);
+  });
+
   it('keeps version 2 fields when canonicalising', () => {
     const recipe = { ...goblin, rightSideHair: 'bob' as const, rightSideHairColor: '#3FC1B8' };
     expect(canonicalRecipe(recipe)).toEqual({ ...recipe, rightSideHairColor: '#3fc1b8' });

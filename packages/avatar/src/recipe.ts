@@ -160,21 +160,34 @@ export type AvatarSpecies = (typeof AVATAR_SPECIES)[number];
 export const AVATAR_PIECE_COLORS = ['leftSideHairColor', 'rightSideHairColor'] as const;
 export type AvatarPieceColor = (typeof AVATAR_PIECE_COLORS)[number];
 
-export type PixelAvatarRecipe = {
+type BaseRecipe = {
   schemaVersion: 1;
   family: 'illustrated';
-  assetVersion: 1 | 2;
   rigVersion: 1;
-} & { [P in AvatarPart]: (typeof AVATAR_PARTS)[P][number] } & Record<AvatarColor, string> & {
-    [P in AvatarHairPart]?: (typeof AVATAR_PARTS)['hair'][number];
-  } & { [P in AvatarRange]?: number } & {
-    /** Asset version 2 only. */
-    species?: AvatarSpecies;
-    /** Asset version 2 only: right side hair; `sideHair` is then the left side. */
-    rightSideHair?: (typeof AVATAR_HAIR_PARTS)['sideHair'][number];
-  } & { [P in AvatarPieceColor]?: string };
+} & { [P in AvatarPart]: (typeof AVATAR_PARTS)[P][number] } & Record<AvatarColor, string>;
 
-export const DEFAULT_RECIPE: PixelAvatarRecipe = {
+/** Asset version 1: optional split hair and geometry, all six or none. */
+export type PixelAvatarRecipeV1 = BaseRecipe & { assetVersion: 1 } & {
+  [P in AvatarHairPart]?: (typeof AVATAR_PARTS)['hair'][number];
+} & { [P in AvatarRange]?: number } & {
+  species?: never;
+  rightSideHair?: never;
+} & { [P in AvatarPieceColor]?: never };
+
+/**
+ * Asset version 2: a species, the full split hair and geometry, a separate right side hair
+ * (`sideHair` is then the left side) and optional per-side hair colors.
+ */
+export type PixelAvatarRecipeV2 = BaseRecipe & { assetVersion: 2 } & {
+  [P in AvatarHairPart]: (typeof AVATAR_PARTS)['hair'][number];
+} & { [P in AvatarRange]: number } & {
+  species: AvatarSpecies;
+  rightSideHair: (typeof AVATAR_HAIR_PARTS)['sideHair'][number];
+} & { [P in AvatarPieceColor]?: string };
+
+export type PixelAvatarRecipe = PixelAvatarRecipeV1 | PixelAvatarRecipeV2;
+
+export const DEFAULT_RECIPE: PixelAvatarRecipeV1 = {
   schemaVersion: 1,
   family: 'illustrated',
   assetVersion: 1,
@@ -266,7 +279,10 @@ export function canonicalRecipe(recipe: PixelAvatarRecipe): PixelAvatarRecipe {
  * When the skin color is one of the previous species' suggested colors, it moves to the new
  * species' first suggestion; a custom color is kept.
  */
-export function withSpecies(recipe: PixelAvatarRecipe, species: AvatarSpecies): PixelAvatarRecipe {
+export function withSpecies(
+  recipe: PixelAvatarRecipe,
+  species: AvatarSpecies,
+): PixelAvatarRecipeV2 {
   const detailed = detailedRecipe(recipe);
   const previous = recipe.species ?? 'human';
   const suggested = AVATAR_SPECIES_SWATCHES[previous].includes(recipe.skinColor.toLowerCase());
@@ -277,7 +293,7 @@ export function withSpecies(recipe: PixelAvatarRecipe, species: AvatarSpecies): 
     rightSideHair: detailed.rightSideHair ?? detailed.sideHair!,
     skinColor:
       suggested && previous !== species ? AVATAR_SPECIES_SWATCHES[species][0]! : recipe.skinColor,
-  } as PixelAvatarRecipe;
+  } as PixelAvatarRecipeV2;
 }
 
 export function detailedRecipe(recipe: PixelAvatarRecipe): PixelAvatarRecipe {
@@ -400,7 +416,7 @@ export const AVATAR_SPECIES_SWATCHES: Record<AvatarSpecies, readonly string[]> =
   goblin: ['#9cc464', '#7fae4f', '#6a9a45', '#b3cf7a', '#5c8a4a', '#8fa86a'],
 };
 
-const preset = (parts: Partial<PixelAvatarRecipe>): PixelAvatarRecipe => ({
+const preset = (parts: Partial<PixelAvatarRecipeV1>): PixelAvatarRecipeV1 => ({
   ...DEFAULT_RECIPE,
   ...parts,
 });

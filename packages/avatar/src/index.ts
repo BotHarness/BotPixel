@@ -30,6 +30,8 @@ export {
   type AvatarRange,
   type AvatarSpecies,
   type PixelAvatarRecipe,
+  type PixelAvatarRecipeV1,
+  type PixelAvatarRecipeV2,
 } from './recipe.js';
 export { seededRandom } from './random.js';
 export { AVATAR_TURNS, faceCells, pixelAvatarSvg, type PixelAvatarSvgOptions } from './svg.js';
