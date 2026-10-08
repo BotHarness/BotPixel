@@ -21,6 +21,7 @@ export const PART_SLOTS = {
   cheeks: { width: 32, height: 32 },
   petals: { width: 32, height: 32 },
   flowerBase: { width: 32, height: 32 },
+  pattern: { width: 32, height: 32 },
 } as const;
 export type PartSlot = keyof typeof PART_SLOTS;
 /**
@@ -44,6 +45,7 @@ export const REPLACE_PART_SLOTS = [
   'cheeks',
   'petals',
   'flowerBase',
+  'pattern',
 ] as const;
 export type ReplacePartSlot = (typeof REPLACE_PART_SLOTS)[number];
 export const isReplacePartSlot = (slot: PartSlot): slot is ReplacePartSlot =>
