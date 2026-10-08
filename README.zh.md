@@ -12,4 +12,8 @@
 
 用法、原理和贡献方式见 [README.md](README.md)。
 
+## 说话嘴型
+
+给 `pixelAvatarSvg` 或 `pixelFigure` 传入 `{ mouthLayers: true }`，即可按需生成嘴型图层。每个转头角度都包含四组 `[data-avatar-mouth]`：`saved`（原本的表情）、`closed`（闭合）、`half-open`（半开）、`open`（张开）。每个角度同时只显示一个状态；说话结束或取消时恢复 `saved`。图层保留共享的眉毛、鼻子和脸颊，以维持原有像素绘制顺序；眼神、眨眼、眼镜和转头保持独立。文本节奏与减少动效策略由使用方负责。不启用该选项时，现有输出逐字节保持不变，配方与已保存的快照不变。
+
 已保存的头像不能变：`packages/avatar/test/fixtures/botharness-golden.json` 锁住了每个选项和种子的输出。

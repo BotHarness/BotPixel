@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `@botharness/pixel-avatar` 0.2.0: opt-in `mouthLayers` adds saved/closed/half-open/open speech features to every head turn. Existing recipes, static snapshots and default golden output remain unchanged; text pacing stays with the consumer.
 - `@botharness/pixel-morph`: one morph that throws no longer stops the shared animation loop for the others, and a morph started from inside a frame no longer starts a second frame chain.
 
 ## 0.2.0

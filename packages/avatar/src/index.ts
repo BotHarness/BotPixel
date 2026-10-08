@@ -1,5 +1,11 @@
 export type { PixelCell } from '@botharness/pixel-morph';
-export { pixelFigure, pixelTileColor, type PixelGrid } from './figure.js';
+export {
+  pixelFigure,
+  pixelTileColor,
+  type PixelGrid,
+  type PixelFigureOptions,
+  type PixelMouthState,
+} from './figure.js';
 export {
   AVATAR_COLORS,
   AVATAR_HAIR_PARTS,

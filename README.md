@@ -51,6 +51,8 @@ The engine does not know what it is drawing. Here it morphs one generated face s
 
 ## Custom avatars
 
+Pass `{ mouthLayers: true }` to `pixelAvatarSvg` or `pixelFigure` to opt into speech features. Each head pose contains four `[data-avatar-mouth]` groups: `saved`, `closed`, `half-open`, and `open`. Show one state in every pose at a time; return to `saved` when speech ends or is cancelled. Layers include shared brows, nose and cheeks so their paint order stays exact. Eyes, blink, glasses and head turns remain independent. Text pacing and reduced-motion policy belong to the consuming app. Without the option, every existing output stays byte-for-byte unchanged; recipes and saved snapshots do not change.
+
 A recipe is plain JSON (`head`, `hair`, `eyes`, `outfit`, `accessory`, colours…). `AVATAR_PARTS`, `AVATAR_SWATCHES` and `AVATAR_PRESETS` list every option, so an app can build its own avatar editor on top; `isPixelAvatarRecipe` validates what users save.
 
 Hosts add their own state symbols with `symbolArtCells(rows, color)`, which draws 24×24 character art (`A` body, `H` highlight) in the built-in style.

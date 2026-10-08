@@ -17,6 +17,10 @@ const TONGUE = '#ef6f84';
 const GOLD = '#efb93f';
 
 export type PixelGrid = Grid;
+export type PixelMouthState = 'saved' | 'closed' | 'half-open' | 'open';
+export interface PixelFigureOptions {
+  mouthLayers?: boolean;
+}
 const blank = (): Grid => Array.from({ length: N }, () => Array<Cell>(N).fill(undefined));
 const ellipse =
   (cx: number, cy: number, rx: number, ry: number): Mask =>
@@ -685,6 +689,7 @@ export function pixelTileColor(hair: string): string {
 export function pixelFigure(
   recipe: Recipe,
   yawDeg: number,
+  options: PixelFigureOptions = {},
 ): { tile: string; body: string; head: string; cells: PixelCell[] } {
   const yaw = (yawDeg * Math.PI) / 180;
   const sinY = Math.sin(yaw);
@@ -848,22 +853,41 @@ export function pixelFigure(
   if (recipe.nose === 'dot') sprite(features, ['N'], cx, 18 + h, { N: shade(skin, 0.78) });
   if (recipe.nose === 'button') sprite(features, ['N'], cx, 18 + h, { N: shade(skin, 0.88) });
   if (recipe.nose === 'line') sprite(features, ['N', 'N'], cx, 17 + h, { N: shade(skin, 0.82) });
-  const mouth = MOUTHS[recipe.mouth];
   const mx = C - 0.5 + fs * 0.6;
-  sprite(features, mouth, Math.round(mx - (mouth[0]!.length - 1) / 2), 20 + h, {
-    K: MOUTH,
-    M: MOUTH_INSIDE,
-    T: TONGUE,
-    W: WHITE,
-  });
-  if (recipe.cheeks === 'blush') {
-    sprite(features, ['PP'], left.x - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
-    sprite(features, ['PP'], right.x + right.w - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
-  }
-  if (recipe.cheeks === 'freckles') {
-    sprite(features, ['F.F'], left.x, 19 + h, { F: shade(skin, 0.7) });
-    sprite(features, ['F.F'], right.x + 1, 19 + h, { F: shade(skin, 0.7) });
-  }
+  const withMouth = (mouth: readonly string[]) => {
+    const layer = features.map((row) => [...row]);
+    sprite(layer, mouth, Math.round(mx - (mouth[0]!.length - 1) / 2), 20 + h, {
+      K: MOUTH,
+      M: MOUTH_INSIDE,
+      T: TONGUE,
+      W: WHITE,
+    });
+    if (recipe.cheeks === 'blush') {
+      sprite(layer, ['PP'], left.x - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
+      sprite(layer, ['PP'], right.x + right.w - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
+    }
+    if (recipe.cheeks === 'freckles') {
+      sprite(layer, ['F.F'], left.x, 19 + h, { F: shade(skin, 0.7) });
+      sprite(layer, ['F.F'], right.x + 1, 19 + h, { F: shade(skin, 0.7) });
+    }
+    return layer;
+  };
+  const savedFeatures = withMouth(MOUTHS[recipe.mouth]);
+  const featureMarkup = options.mouthLayers
+    ? (
+        [
+          ['saved', MOUTHS[recipe.mouth]],
+          ['closed', ['KKK']],
+          ['half-open', ['KKK', 'MMM']],
+          ['open', ['.K.', 'KMK', '.K.']],
+        ] satisfies readonly [PixelMouthState, readonly string[]][]
+      )
+        .map(
+          ([state, rows]) =>
+            `<g data-avatar-mouth="${state}" opacity="${state === 'saved' ? 1 : 0}">${rects(withMouth(rows))}</g>`,
+        )
+        .join('')
+    : rects(savedFeatures);
   const frame = (fx: number, w: number, round: boolean) =>
     paint(
       glasses,
@@ -908,7 +932,7 @@ export function pixelFigure(
   const cells: PixelCell[] = [];
   for (let y = 0; y < N; y++)
     for (let x = 0; x < N; x++) {
-      const c = glasses[y]![x] ?? eyes[y]![x] ?? features[y]![x] ?? full[y]![x];
+      const c = glasses[y]![x] ?? eyes[y]![x] ?? savedFeatures[y]![x] ?? full[y]![x];
       if (c) cells.push({ x, y, c });
     }
   return {
@@ -917,7 +941,7 @@ export function pixelFigure(
     body: `<g class="bh-illustrated-body">${rects(bodyCells)}</g>`,
     head: [
       `<g class="bh-illustrated-head">${rects(headCells)}`,
-      `<g class="bh-illustrated-face">${rects(features)}`,
+      `<g class="bh-illustrated-face">${featureMarkup}`,
       `<g class="bh-illustrated-gaze">${rects(eyes)}</g>`,
       `<g class="bh-illustrated-blink" opacity="0">${rects(closed)}</g>`,
       `${rects(glasses)}</g></g>`,
