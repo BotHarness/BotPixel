@@ -1,4 +1,5 @@
 import { escapeAttribute, type PixelCell } from '@botharness/pixel-morph';
+import type { PartCell, PartTone } from './part.js';
 import { AVATAR_PIECE_COLORS, type PixelAvatarRecipe } from './recipe.js';
 
 type Cell = string | undefined;
@@ -46,6 +47,17 @@ const mix = (base: string, tint: string, k: number) => {
   const t = channels(tint);
   return hex(channels(base).map((v, i) => v * (1 - k) + t[i]! * k));
 };
+const TONES: Record<PartTone, (color: string) => string> = {
+  [-2]: (c) => shade(c, 0.62),
+  [-1]: (c) => shade(c, 0.8),
+  0: (c) => c,
+  1: (c) => mix(c, WHITE, 0.25),
+  2: (c) => mix(c, WHITE, 0.5),
+};
+/** The color a Custom Part cell shows at a tone step on the rig's shade ramp. */
+export function partToneColor(color: string, tone: PartTone): string {
+  return TONES[tone](color.toLowerCase());
+}
 function paint(grid: Grid, test: Mask, color: string): void {
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (test(x, y)) grid[y]![x] = color;
 }
@@ -903,6 +915,19 @@ export function pixelFigure(
       shade(hairColor, 0.68),
     );
 
+  const headpiece = recipe.assetVersion === 3 ? recipe.headpiece : undefined;
+  const placeCells = (grid: Grid, cells: readonly PartCell[]) => {
+    const placed = cells.map(([x, y, color, tone]) => {
+      const dx = x + 0.5 - C;
+      const far = turned && d * dx < 0 && Math.abs(dx) >= 5;
+      const base = color.startsWith('#') ? color.toLowerCase() : recipe[color as 'hairColor'];
+      return { x: x + s + (far ? d : 0), y, c: TONES[tone](base), far };
+    });
+    for (const cell of [...placed.filter((p) => p.far), ...placed.filter((p) => !p.far)])
+      if (cell.x >= 0 && cell.x < N) grid[cell.y]![cell.x] = cell.c;
+  };
+  if (headpiece) placeCells(back, headpiece.back);
+
   const head = blank();
   paint(head, face, skin);
   const h = recipe.height ?? 0;
@@ -1013,8 +1038,10 @@ export function pixelFigure(
     return out;
   };
 
+  const crown = blank();
+  if (headpiece) placeCells(crown, headpiece.front);
   const figure = blank();
-  for (const layer of [back, body, shadeHair(head)])
+  for (const layer of [back, body, shadeHair(head), crown])
     for (let y = 0; y < N; y++)
       for (let x = 0; x < N; x++) if (layer[y]![x]) figure[y]![x] = layer[y]![x];
 
@@ -1183,7 +1210,7 @@ export function pixelFigure(
     for (let x = 0; x < N; x++) {
       const c = full[y]![x];
       if (!c) continue;
-      if (y >= 22 && !head[y]![x] && !back[y]![x]) bodyCells[y]![x] = c;
+      if (y >= 22 && !head[y]![x] && !back[y]![x] && !crown[y]![x]) bodyCells[y]![x] = c;
       else headCells[y]![x] = c;
     }
   const cells: PixelCell[] = [];

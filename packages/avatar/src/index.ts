@@ -1,5 +1,6 @@
 export type { PixelCell } from '@botharness/pixel-morph';
 export {
+  partToneColor,
   pixelFigure,
   pixelTileColor,
   type PixelGrid,
@@ -38,7 +39,33 @@ export {
   type PixelAvatarRecipe,
   type PixelAvatarRecipeV1,
   type PixelAvatarRecipeV2,
+  type PixelAvatarRecipeV3,
+  withHeadpiece,
 } from './recipe.js';
+export {
+  MAX_PART_FIXED_COLORS,
+  PART_LAYERS,
+  PART_SLOTS,
+  PART_TONES,
+  canonicalCustomPart,
+  createCustomPart,
+  customPartId,
+  emptyPartLayer,
+  fillPartLayer,
+  isPixelCustomPart,
+  mirrorPartX,
+  paintPartLayer,
+  partCells,
+  partLayer,
+  type PartCell,
+  type PartColor,
+  type PartInk,
+  type PartLayer,
+  type PartLayerName,
+  type PartSlot,
+  type PartTone,
+  type PixelCustomPart,
+} from './part.js';
 export { seededRandom } from './random.js';
 export { AVATAR_TURNS, faceCells, pixelAvatarSvg, type PixelAvatarSvgOptions } from './svg.js';
 export { PIXEL_SYMBOLS, pixelSymbolCells, symbolArtCells, type PixelSymbol } from './symbols.js';
