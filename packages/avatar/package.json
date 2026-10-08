@@ -1,6 +1,6 @@
 {
   "name": "@botharness/pixel-avatar",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Seeded, editable 32×32 chibi pixel avatars with state symbols that morph in and out",
   "keywords": [
     "agent-ui",

@@ -1,0 +1,387 @@
+{
+  "goblin": {
+    "front": "9ea6b01ec8554c81",
+    "turns": "14256b9703382496",
+    "mouths": "b20d2ee2e500015d"
+  },
+  "preset-0": {
+    "front": "8946971f3c0c1e73",
+    "turns": "db84f830cdb282b4",
+    "mouths": "28992b51bf6f8952"
+  },
+  "preset-1": {
+    "front": "4be5cfd7fc334235",
+    "turns": "18d1617ca62f7d54",
+    "mouths": "9a490f815f64ca7a"
+  },
+  "preset-2": {
+    "front": "a3a1c674ddec0f69",
+    "turns": "710c55e5f2d334f1",
+    "mouths": "f59bc1c7e10e7525"
+  },
+  "preset-3": {
+    "front": "b4c9d9617a8b1e98",
+    "turns": "addf432823851099",
+    "mouths": "e31e347a62b4baba"
+  },
+  "preset-4": {
+    "front": "e4ad317ab872509f",
+    "turns": "187305614b17a660",
+    "mouths": "4b2521939418292d"
+  },
+  "preset-5": {
+    "front": "32f49bf5ce3c4f50",
+    "turns": "67fb6a6901d761c7",
+    "mouths": "90b726bb2639d2d7"
+  },
+  "preset-6": {
+    "front": "3f322ce8080da94f",
+    "turns": "42b68bce3538db7d",
+    "mouths": "459fee379a940045"
+  },
+  "preset-7": {
+    "front": "c98937fe5280ac52",
+    "turns": "b0af49a5e7b0f24a",
+    "mouths": "1ac61857030a026d"
+  },
+  "preset-8": {
+    "front": "a81a0ff011eeecd5",
+    "turns": "fccabeb3692cc1b4",
+    "mouths": "c2075acdca048bbd"
+  },
+  "preset-9": {
+    "front": "fe8b338c5488f7b6",
+    "turns": "5486e40d6ea18d68",
+    "mouths": "1dc193b7646abb6b"
+  },
+  "preset-10": {
+    "front": "c3d5fca956a5a377",
+    "turns": "fc9b1c9f8a456903",
+    "mouths": "88e5eb61877b1c4c"
+  },
+  "preset-11": {
+    "front": "675b856adb13e378",
+    "turns": "042b43fe0b84465b",
+    "mouths": "63f04bec41c0daeb"
+  },
+  "head-round": {
+    "front": "9ea6b01ec8554c81",
+    "turns": "14256b9703382496",
+    "mouths": "b20d2ee2e500015d"
+  },
+  "head-oval": {
+    "front": "9610dc13d9d1c2c0",
+    "turns": "c0778e496e3794d7",
+    "mouths": "fd8c793d3caa3ec6"
+  },
+  "head-square": {
+    "front": "9d1d011d37eeca20",
+    "turns": "1d197b575b75f528",
+    "mouths": "e757d98449767c24"
+  },
+  "head-long": {
+    "front": "bfd9f11f4725330c",
+    "turns": "c4052ba3f3c8f4eb",
+    "mouths": "353197d9e5da9d67"
+  },
+  "head-heart": {
+    "front": "0048764473889da0",
+    "turns": "308e3edc87ab52b0",
+    "mouths": "0564324382c9fe6d"
+  },
+  "head-vchin": {
+    "front": "0bfb23ea3c7f7b9a",
+    "turns": "e00a764990b4bbbb",
+    "mouths": "c55e81282898fb9d"
+  },
+  "head-chubby": {
+    "front": "48bcff712b6b40ae",
+    "turns": "7b7da1f30c013442",
+    "mouths": "0cf0808c0a055bc3"
+  },
+  "head-diamond": {
+    "front": "75931bfc247d0a0a",
+    "turns": "8ae422e323fd5538",
+    "mouths": "f7faf6ae0f338bf6"
+  },
+  "eyes-round": {
+    "front": "9ea6b01ec8554c81",
+    "turns": "14256b9703382496",
+    "mouths": "b20d2ee2e500015d"
+  },
+  "eyes-dot": {
+    "front": "699b596645a72228",
+    "turns": "9af3a47d1b16200d",
+    "mouths": "ce8bf15e776cbc61"
+  },
+  "eyes-sparkle": {
+    "front": "59d16443126d4476",
+    "turns": "e437a1fe444d8009",
+    "mouths": "8ad123c9222e6698"
+  },
+  "eyes-lashes": {
+    "front": "787e2365e983be88",
+    "turns": "2507a72c862a7bed",
+    "mouths": "c8d95a67887be2ab"
+  },
+  "eyes-sleepy": {
+    "front": "1206a6356d73d486",
+    "turns": "d0e231988d514d4f",
+    "mouths": "5de24f720777bdb6"
+  },
+  "eyes-happy": {
+    "front": "2cc8a5bb11058377",
+    "turns": "d0192718648f8b26",
+    "mouths": "bc0e2440a551998a"
+  },
+  "eyes-wink": {
+    "front": "a8685721ea16d1df",
+    "turns": "a089ac414dc3a8fa",
+    "mouths": "66fee2df79f936df"
+  },
+  "eyes-sharp": {
+    "front": "0fc79a49f3e73674",
+    "turns": "fdffb208d347f55d",
+    "mouths": "524f15c3ec3330a3"
+  },
+  "mouth-smile": {
+    "front": "9ea6b01ec8554c81",
+    "turns": "14256b9703382496",
+    "mouths": "b20d2ee2e500015d"
+  },
+  "mouth-grin": {
+    "front": "5b5c34bc8771d4de",
+    "turns": "4244c8572b501cc4",
+    "mouths": "a75c6c4bb8562b16"
+  },
+  "mouth-open": {
+    "front": "9cd8ba254b585687",
+    "turns": "a6235ad7c96672d3",
+    "mouths": "96328376d88bec3a"
+  },
+  "mouth-flat": {
+    "front": "9cab2c41bb39613a",
+    "turns": "9897fdb6ce638b40",
+    "mouths": "8c0448bb638a85df"
+  },
+  "mouth-smirk": {
+    "front": "e8758e05f0735a28",
+    "turns": "5279f907cf10080b",
+    "mouths": "97d1124dd4041d85"
+  },
+  "mouth-cat": {
+    "front": "15ab5ad04aae5ef1",
+    "turns": "d8da17290b00309d",
+    "mouths": "478d897210a0719f"
+  },
+  "mouth-tongue": {
+    "front": "3308303c3f08b5a4",
+    "turns": "d1209ad3dd053473",
+    "mouths": "e0b4cd9fdaeb974b"
+  },
+  "mouth-o": {
+    "front": "2e17ad35b0ffeda4",
+    "turns": "ddabf6dc063565cb",
+    "mouths": "1811a314e83587f6"
+  },
+  "accessory-none": {
+    "front": "9ea6b01ec8554c81",
+    "turns": "14256b9703382496",
+    "mouths": "b20d2ee2e500015d"
+  },
+  "accessory-beanie": {
+    "front": "1aa17d1aef66732b",
+    "turns": "e062cff1972408c2",
+    "mouths": "634d89736cab0149"
+  },
+  "accessory-cap": {
+    "front": "5fee40bd0e4fb34e",
+    "turns": "603fa1e4e4815aaf",
+    "mouths": "9f23fb3e80d9cadc"
+  },
+  "accessory-headphones": {
+    "front": "d0b65c58b26de992",
+    "turns": "d09675a9059fb004",
+    "mouths": "34ba3fa5440a2655"
+  },
+  "accessory-flower": {
+    "front": "83cf569826e07137",
+    "turns": "f6e34946929a717e",
+    "mouths": "84d8b352b877f4f3"
+  },
+  "accessory-bow": {
+    "front": "ce57a1ace3c068dc",
+    "turns": "8cd09a54d7943486",
+    "mouths": "970b37e4ce729793"
+  },
+  "accessory-earring": {
+    "front": "69e3d460b200d5de",
+    "turns": "f059e9260c67877f",
+    "mouths": "afb7a2d522f46827"
+  },
+  "accessory-crown": {
+    "front": "21e057a62b37b7d5",
+    "turns": "d4bd3857c085d938",
+    "mouths": "cecc4e3d8a9a411c"
+  },
+  "accessory-halo": {
+    "front": "30e42ccf6f9f51ed",
+    "turns": "da5bdb10f2172a61",
+    "mouths": "898599c4b7a96acd"
+  },
+  "accessory-catears": {
+    "front": "bf15f2e0bce0dbe2",
+    "turns": "6f40fccaf697ea8d",
+    "mouths": "da0c538ea801d61f"
+  },
+  "accessory-hairclip": {
+    "front": "61306bf63a99d951",
+    "turns": "61f1c0d6e9368487",
+    "mouths": "e0c1d8c4770ab0f7"
+  },
+  "accessory-horns": {
+    "front": "f8646793fe9b566d",
+    "turns": "b0140392f4b0aafd",
+    "mouths": "ac1731bdce51df06"
+  },
+  "accessory-beret": {
+    "front": "ed58897b7755c059",
+    "turns": "e0bd399c49b3908f",
+    "mouths": "d1f2efb29d3e38c5"
+  },
+  "accessory-ribbon": {
+    "front": "b8dcc50e4973f032",
+    "turns": "828c888b4bc3493a",
+    "mouths": "616f10733d8a0ab3"
+  },
+  "accessory-headband": {
+    "front": "95d53a08d9632580",
+    "turns": "1db122d960eca636",
+    "mouths": "76eaa4beaadd8d0b"
+  },
+  "accessory-bunnyears": {
+    "front": "81cae16a65a559dd",
+    "turns": "e3a8b02fd36ce5e7",
+    "mouths": "a09668806b50496a"
+  },
+  "accessory-horseears": {
+    "front": "4543e7a3ca735bd8",
+    "turns": "703d7933e0861718",
+    "mouths": "708c091abdf714a2"
+  },
+  "accessory-flowercrown": {
+    "front": "df3b8fe0e37b58c7",
+    "turns": "01bc42ce54cac92c",
+    "mouths": "c262d1af14661a9d"
+  },
+  "accessory-witch": {
+    "front": "e00c08bc48b14285",
+    "turns": "c7dbee39218bf037",
+    "mouths": "ce2fbcf3cf1b14d9"
+  },
+  "accessory-pins": {
+    "front": "5d2b30c9c3688b96",
+    "turns": "31c79dc3240be7b3",
+    "mouths": "ff3d678221eeb677"
+  },
+  "glasses-none": {
+    "front": "9ea6b01ec8554c81",
+    "turns": "14256b9703382496",
+    "mouths": "b20d2ee2e500015d"
+  },
+  "glasses-round": {
+    "front": "5d46d56eb91840b1",
+    "turns": "856a8bb42ed10198",
+    "mouths": "2b1569f48a09d63a"
+  },
+  "glasses-square": {
+    "front": "2ec8c6ca0d730855",
+    "turns": "14594478e945cecd",
+    "mouths": "a4df12731a89e22c"
+  },
+  "glasses-shades": {
+    "front": "b0613bc95d0667d2",
+    "turns": "c3b095e1ff347a3a",
+    "mouths": "fb2df2609b50dacc"
+  },
+  "glasses-monocle": {
+    "front": "b7347c41dc6c88b2",
+    "turns": "638b0add1f3e1d34",
+    "mouths": "7fb7f0da34f8c87a"
+  },
+  "right-crop": {
+    "front": "581090110b645139",
+    "turns": "c23775ba5007d815",
+    "mouths": "12dd1b6bf4bc19fd"
+  },
+  "right-bun": {
+    "front": "b6a573ade98bf7af",
+    "turns": "c511911b25f727f6",
+    "mouths": "5c77d3855634336c"
+  },
+  "right-bob": {
+    "front": "80c350445fbc1120",
+    "turns": "8e59e039432b650f",
+    "mouths": "9ca3c1f678290692"
+  },
+  "right-long": {
+    "front": "93c0a8f7ca366c27",
+    "turns": "796ef35784840763",
+    "mouths": "1482b88ca77e0924"
+  },
+  "right-hime": {
+    "front": "2d005d6f9d8d6445",
+    "turns": "30a6b4fd1b7eee42",
+    "mouths": "2eb63e2dfcecfd6f"
+  },
+  "right-curly": {
+    "front": "cb1e74ad5822acce",
+    "turns": "e313a03f4eb3b812",
+    "mouths": "9daaa490de5fbcc3"
+  },
+  "right-braids": {
+    "front": "1d1c40c88bd4156d",
+    "turns": "783ebcd47f4c83c7",
+    "mouths": "9f0003610eb036e3"
+  },
+  "right-none": {
+    "front": "7fdd35d37d1fc1b2",
+    "turns": "78e335f38603fd34",
+    "mouths": "a2b401c6cd883b18"
+  },
+  "spacing=-1": {
+    "front": "9600ec09c52e7f2f",
+    "turns": "b3de25ff991c2f04",
+    "mouths": "3af3231c9b5933a1"
+  },
+  "spacing=1": {
+    "front": "473d5531b84d834f",
+    "turns": "ee0a734eb117de0a",
+    "mouths": "de5f247f0a9bc658"
+  },
+  "height=-1": {
+    "front": "1607d3d7565bffce",
+    "turns": "55dddd86daff91a2",
+    "mouths": "2a615e58d73a3dea"
+  },
+  "height=1": {
+    "front": "064a175ee6c09ed0",
+    "turns": "4ec5a43ce9b745c7",
+    "mouths": "1d706e2401ea740e"
+  },
+  "hairLength=-2": {
+    "front": "dae4f98b1a6a3e5a",
+    "turns": "4ebb107f091a8654",
+    "mouths": "a0542222be186a43"
+  },
+  "hairLength=2": {
+    "front": "086e59622cf7cb09",
+    "turns": "92f6400e5c8003d6",
+    "mouths": "844bfc3d30b354f3"
+  },
+  "two-tone": {
+    "front": "0b9aeccfc4dfdfaa",
+    "turns": "6e7b7215c670a2d1",
+    "mouths": "7ab874e2997586ba"
+  }
+}
