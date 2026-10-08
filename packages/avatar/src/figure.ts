@@ -1,5 +1,5 @@
 import { escapeAttribute, type PixelCell } from '@botharness/pixel-morph';
-import type { PixelAvatarRecipe } from './recipe.js';
+import { AVATAR_PIECE_COLORS, type PixelAvatarRecipe } from './recipe.js';
 
 type Cell = string | undefined;
 type Grid = Cell[][];
@@ -15,6 +15,7 @@ const MOUTH = '#7a2a38';
 const MOUTH_INSIDE = '#b8415a';
 const TONGUE = '#ef6f84';
 const GOLD = '#efb93f';
+const TUSK = '#f6f0d8';
 
 export type PixelGrid = Grid;
 export type PixelMouthState = 'saved' | 'closed' | 'half-open' | 'open';
@@ -353,24 +354,31 @@ function detailedHair(
   recipe: Recipe,
   s: number,
   b: number,
-): { back: Mask; front: Mask; ties?: Point[]; bands?: boolean } {
+): { back: Mask; front: Mask; ties?: Point[]; bands?: boolean; sides?: [Mask, Mask] } {
   const of = (style: Recipe['hair'] | undefined) =>
     hair({ ...recipe, hair: style ?? 'none' }, s, b);
   const bangs = of(recipe.bangs);
   const side = of(recipe.sideHair);
+  const right = recipe.rightSideHair === undefined ? side : of(recipe.rightSideHair);
   const back = of(recipe.backHair);
   const length = (recipe.hairLength ?? 0) * 2;
   const lengthen =
     (mask: Mask): Mask =>
     (x, y) =>
       mask(x, y > 18 ? Math.round(y - length) : y);
+  // Side pieces cover |dx| >= 7 below the crown; with a right piece, each side has its own.
+  const sideOf =
+    (sign: -1 | 1): Mask =>
+    (x, y) =>
+      y > 7 && sign * (x + 0.5 - C - s) >= 7 && lengthen((sign < 0 ? side : right).front)(x, y);
   return {
     front: (x, y) =>
       y <= 7
         ? bangs.front(x, y) || back.front(x, y)
         : Math.abs(x + 0.5 - C - s) < 7
           ? bangs.front(x, y)
-          : lengthen(side.front)(x, y),
+          : lengthen((x + 0.5 - C - s < 0 ? side : right).front)(x, y),
+    sides: [sideOf(-1), sideOf(1)],
     back: length === 0 ? back.back : lengthen(back.back),
     ...(back.ties ? { ties: back.ties } : {}),
     ...(back.bands ? { bands: back.bands } : {}),
@@ -708,7 +716,8 @@ export function pixelFigure(
         return front(x - Math.round(d * (1 + Math.max(0, y - 20) * 0.4) - d * tuck), y);
       }
     : front;
-  const masks = recipe.bangs === undefined ? hair(recipe, s, b) : detailedHair(recipe, s, b);
+  const masks: ReturnType<typeof detailedHair> =
+    recipe.bangs === undefined ? hair(recipe, s, b) : detailedHair(recipe, s, b);
 
   const body = blank();
   outfit(recipe, body, s);
@@ -729,7 +738,15 @@ export function pixelFigure(
     const xs = [...Array(N).keys()].filter((x) => face(x, earY));
     return side < 0 ? xs[0]! - 1 : xs.at(-1)! + 1;
   };
-  if (!turned)
+  const goblin = recipe.species === 'goblin';
+  if (goblin) {
+    // Long pointed ears drawn over hair: the outer tip rises above the ear line.
+    const ear = ['E...', 'EE..', '.EiE', '..Ee'];
+    const pal = { E: skin, e: shade(skin, 0.86), i: shade(skin, 0.74) };
+    paint(head, masks.front, hairColor);
+    for (const ex of turned ? [-d] : [-1, 1])
+      sprite(head, ear, ex < 0 ? edge(ex) - 3 : edge(ex), earY - 2, pal, ex > 0);
+  } else if (!turned)
     for (const ex of [-1, 1])
       sprite(head, ['E', 'E', 'e'], edge(ex), earY, { E: skin, e: shade(skin, 0.86) });
   else
@@ -737,7 +754,7 @@ export function pixelFigure(
       E: skin,
       e: shade(skin, 0.8),
     });
-  paint(head, masks.front, hairColor);
+  if (!goblin) paint(head, masks.front, hairColor);
   for (const [x, y] of masks.ties ?? [])
     sprite(back, ['T'], Math.round(x), y, { T: shade(recipe.shirtColor, 0.8) });
   accessory(recipe, head, s, face);
@@ -862,6 +879,9 @@ export function pixelFigure(
       T: TONGUE,
       W: WHITE,
     });
+    if (recipe.species === 'goblin')
+      for (const tx of [Math.round(mx - 2.5), Math.round(mx + 2.5)])
+        sprite(layer, ['T'], tx, 21 + h, { T: TUSK });
     if (recipe.cheeks === 'blush') {
       sprite(layer, ['PP'], left.x - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
       sprite(layer, ['PP'], right.x + right.w - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
@@ -920,6 +940,21 @@ export function pixelFigure(
   }
 
   const full = clip(outline(figure));
+  AVATAR_PIECE_COLORS.forEach((key, i) => {
+    const color = recipe[key];
+    const mask = masks.sides?.[i];
+    if (color === undefined || !mask || color.toLowerCase() === hairColor.toLowerCase()) return;
+    const variant = blank();
+    const plain = { ...recipe, hairColor: color };
+    for (const k of AVATAR_PIECE_COLORS) delete plain[k];
+    for (const cell of pixelFigure(plain, yawDeg).cells) variant[cell.y]![cell.x] = cell.c;
+    const near = (x: number, y: number) =>
+      mask(x, y) || mask(x - 1, y) || mask(x + 1, y) || mask(x, y - 1) || mask(x, y + 1);
+    for (let y = 0; y < N; y++)
+      for (let x = 0; x < N; x++)
+        if (full[y]![x] && near(x, y) && !eyes[y]![x] && !glasses[y]![x])
+          full[y]![x] = variant[y]![x];
+  });
   const bodyCells = blank();
   const headCells = blank();
   for (let y = 0; y < N; y++)

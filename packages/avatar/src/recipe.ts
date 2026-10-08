@@ -150,16 +150,44 @@ export type AvatarPart = keyof typeof AVATAR_PARTS;
 export const AVATAR_COLORS = ['skinColor', 'hairColor', 'eyeColor', 'shirtColor'] as const;
 export type AvatarColor = (typeof AVATAR_COLORS)[number];
 
-export type PixelAvatarRecipe = {
+/**
+ * Avatar Species: a base on the pixel bust rig. Species share motion and anchors; each sets its
+ * own ears, face details and suggested body colors. A recipe with a species is asset version 2.
+ */
+export const AVATAR_SPECIES = ['human', 'goblin'] as const;
+export type AvatarSpecies = (typeof AVATAR_SPECIES)[number];
+/** Optional per-piece hair colors (asset version 2); an absent piece uses `hairColor`. */
+export const AVATAR_PIECE_COLORS = ['leftSideHairColor', 'rightSideHairColor'] as const;
+export type AvatarPieceColor = (typeof AVATAR_PIECE_COLORS)[number];
+
+type BaseRecipe = {
   schemaVersion: 1;
   family: 'illustrated';
-  assetVersion: 1;
   rigVersion: 1;
-} & { [P in AvatarPart]: (typeof AVATAR_PARTS)[P][number] } & Record<AvatarColor, string> & {
-    [P in AvatarHairPart]?: (typeof AVATAR_PARTS)['hair'][number];
-  } & { [P in AvatarRange]?: number };
+} & { [P in AvatarPart]: (typeof AVATAR_PARTS)[P][number] } & Record<AvatarColor, string>;
 
-export const DEFAULT_RECIPE: PixelAvatarRecipe = {
+/** Asset version 1: optional split hair and geometry, all six or none. */
+export type PixelAvatarRecipeV1 = BaseRecipe & { assetVersion: 1 } & {
+  [P in AvatarHairPart]?: (typeof AVATAR_PARTS)['hair'][number];
+} & { [P in AvatarRange]?: number } & {
+  species?: never;
+  rightSideHair?: never;
+} & { [P in AvatarPieceColor]?: never };
+
+/**
+ * Asset version 2: a species, the full split hair and geometry, a separate right side hair
+ * (`sideHair` is then the left side) and optional per-side hair colors.
+ */
+export type PixelAvatarRecipeV2 = BaseRecipe & { assetVersion: 2 } & {
+  [P in AvatarHairPart]: (typeof AVATAR_PARTS)['hair'][number];
+} & { [P in AvatarRange]: number } & {
+  species: AvatarSpecies;
+  rightSideHair: (typeof AVATAR_HAIR_PARTS)['sideHair'][number];
+} & { [P in AvatarPieceColor]?: string };
+
+export type PixelAvatarRecipe = PixelAvatarRecipeV1 | PixelAvatarRecipeV2;
+
+export const DEFAULT_RECIPE: PixelAvatarRecipeV1 = {
   schemaVersion: 1,
   family: 'illustrated',
   assetVersion: 1,
@@ -189,7 +217,19 @@ export function isPixelAvatarRecipe(value: unknown): value is PixelAvatarRecipe 
   const r = value as Record<string, unknown>;
   const detailed = DETAIL_KEYS.filter((key) => Object.hasOwn(r, key)).length;
   if (detailed !== 0 && detailed !== DETAIL_KEYS.length) return false;
-  if (Object.keys(r).length !== Object.keys(DEFAULT_RECIPE).length + detailed) return false;
+  const v2 = r['assetVersion'] === 2;
+  const pieces = AVATAR_PIECE_COLORS.filter((key) => Object.hasOwn(r, key));
+  const v2Keys = v2 ? 2 + pieces.length : 0;
+  if (Object.keys(r).length !== Object.keys(DEFAULT_RECIPE).length + detailed + v2Keys)
+    return false;
+  if (
+    v2 &&
+    (detailed === 0 ||
+      !(AVATAR_SPECIES as readonly unknown[]).includes(r['species']) ||
+      !(AVATAR_HAIR_PARTS.sideHair as readonly unknown[]).includes(r['rightSideHair']) ||
+      !pieces.every((key) => typeof r[key] === 'string' && /^#[\da-f]{6}$/iu.test(r[key])))
+  )
+    return false;
   return (
     (detailed === 0 ||
       ((Object.keys(AVATAR_HAIR_PARTS) as AvatarHairPart[]).every(
@@ -204,7 +244,7 @@ export function isPixelAvatarRecipe(value: unknown): value is PixelAvatarRecipe 
         }))) &&
     r['schemaVersion'] === 1 &&
     r['family'] === 'illustrated' &&
-    r['assetVersion'] === 1 &&
+    (r['assetVersion'] === 1 || v2) &&
     r['rigVersion'] === 1 &&
     PART_KEYS.every(
       (key) =>
@@ -218,13 +258,42 @@ export function canonicalRecipe(recipe: PixelAvatarRecipe): PixelAvatarRecipe {
   const canonical: Record<string, unknown> = {
     schemaVersion: 1,
     family: 'illustrated',
-    assetVersion: 1,
+    assetVersion: recipe.assetVersion,
     rigVersion: 1,
   };
   for (const key of PART_KEYS) canonical[key] = recipe[key];
   for (const key of AVATAR_COLORS) canonical[key] = recipe[key].toLowerCase();
   if (recipe.bangs !== undefined) for (const key of DETAIL_KEYS) canonical[key] = recipe[key];
+  if (recipe.assetVersion === 2) {
+    canonical['species'] = recipe.species;
+    canonical['rightSideHair'] = recipe.rightSideHair;
+    for (const key of AVATAR_PIECE_COLORS)
+      if (recipe[key] !== undefined) canonical[key] = recipe[key].toLowerCase();
+  }
   return canonical as PixelAvatarRecipe;
+}
+
+/**
+ * Returns the recipe as asset version 2 with the given species, keeping every other choice.
+ * Side hair splits into left (`sideHair`) and right (`rightSideHair`) pieces that start equal.
+ * When the skin color is one of the previous species' suggested colors, it moves to the new
+ * species' first suggestion; a custom color is kept.
+ */
+export function withSpecies(
+  recipe: PixelAvatarRecipe,
+  species: AvatarSpecies,
+): PixelAvatarRecipeV2 {
+  const detailed = detailedRecipe(recipe);
+  const previous = recipe.species ?? 'human';
+  const suggested = AVATAR_SPECIES_SWATCHES[previous].includes(recipe.skinColor.toLowerCase());
+  return {
+    ...detailed,
+    assetVersion: 2,
+    species,
+    rightSideHair: detailed.rightSideHair ?? detailed.sideHair!,
+    skinColor:
+      suggested && previous !== species ? AVATAR_SPECIES_SWATCHES[species][0]! : recipe.skinColor,
+  } as PixelAvatarRecipeV2;
 }
 
 export function detailedRecipe(recipe: PixelAvatarRecipe): PixelAvatarRecipe {
@@ -341,7 +410,13 @@ export function createSeededRecipe(namespace: string): (seed: string) => PixelAv
 export const seededRecipe: (seed: string) => PixelAvatarRecipe =
   createSeededRecipe('botharness-avatar');
 
-const preset = (parts: Partial<PixelAvatarRecipe>): PixelAvatarRecipe => ({
+/** Suggested body colors per species; any color remains allowed. */
+export const AVATAR_SPECIES_SWATCHES: Record<AvatarSpecies, readonly string[]> = {
+  human: AVATAR_SWATCHES.skinColor,
+  goblin: ['#9cc464', '#7fae4f', '#6a9a45', '#b3cf7a', '#5c8a4a', '#8fa86a'],
+};
+
+const preset = (parts: Partial<PixelAvatarRecipeV1>): PixelAvatarRecipeV1 => ({
   ...DEFAULT_RECIPE,
   ...parts,
 });
