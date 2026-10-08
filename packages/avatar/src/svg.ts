@@ -8,6 +8,7 @@ const YAW = { front: 0, left: -25, right: 25 } as const;
 export const AVATAR_TURNS = [-14, -7, 7, 14] as const;
 
 export interface PixelAvatarSvgOptions {
+  mouthLayers?: boolean;
   /** Extra yaw offsets to pre-render as hidden `[data-avatar-turn]` layers. */
   turns?: readonly number[];
   /** Class prefix for the rig layers (`-body`, `-head`, `-face`, `-gaze`, `-blink`). */
@@ -25,10 +26,10 @@ export function pixelAvatarSvg(
   options: PixelAvatarSvgOptions = {},
 ): string {
   if (!isPixelAvatarRecipe(recipe)) throw new Error('invalid Avatar recipe');
-  const base = pixelFigure(recipe, YAW[recipe.pose]);
+  const base = pixelFigure(recipe, YAW[recipe.pose], options);
   const turns = (options.turns ?? [])
     .map((delta) => {
-      const figure = pixelFigure(recipe, YAW[recipe.pose] + delta);
+      const figure = pixelFigure(recipe, YAW[recipe.pose] + delta, options);
       const layers = `${figure.body}${figure.head}`.replaceAll(
         'class="bh-illustrated-',
         'data-turn-part="',
