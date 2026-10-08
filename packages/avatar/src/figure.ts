@@ -474,6 +474,46 @@ function outfit(recipe: Recipe, g: Grid, s: number): void {
       paint(g, (x, y) => y === 24 && Math.abs(dx(x)) <= 4.5, WHITE);
       sprite(g, ['RR.RR', '.RRR.'], Math.round(C + s * 0.5) - 2, 24, { R: shirt });
       break;
+    case 'armor': {
+      const metal = '#9aa3ad';
+      paint(g, torso, metal);
+      paint(g, (x, y) => torso(x, y) && y >= 26 && Math.abs(dx(x)) <= 2.5, shirt);
+      paint(
+        g,
+        (x, y) => torso(x, y) && y <= 26 && Math.abs(dx(x)) >= half(y) - 3.5,
+        mix(metal, WHITE, 0.35),
+      );
+      paint(
+        g,
+        (x, y) => torso(x, y) && y === 27 && Math.abs(dx(x)) >= half(y) - 3.5,
+        shade(metal, 0.7),
+      );
+      paint(g, (x, y) => y === 24 && Math.abs(dx(x)) <= 3.5, shade(metal, 0.8));
+      sprite(g, ['G'], Math.round(C + s * 0.5), 28, { G: GOLD });
+      break;
+    }
+    case 'robe':
+      paint(g, v(5, 4), mix(shirt, WHITE, 0.7));
+      paint(
+        g,
+        (x, y) => torso(x, y) && y <= 29 && Math.abs(Math.abs(dx(x)) - (4 - (y - 24) * 0.8)) <= 0.5,
+        GOLD,
+      );
+      paint(g, (x, y) => torso(x, y) && y >= 28 && Math.abs(dx(x)) >= half(y) - 1.5, dark);
+      break;
+    case 'tunic':
+      paint(g, v(2, 2), shade(skin, 0.85));
+      sprite(g, ['L.L', '.L.'], Math.round(C + s * 0.5) - 1, 25, { L: '#6b4a2b' });
+      paint(g, (x, y) => torso(x, y) && y === 29, '#6b4a2b');
+      sprite(g, ['G'], Math.round(C + s * 0.5), 29, { G: GOLD });
+      break;
+    case 'cloak': {
+      const cloak = mix(shirt, '#2f3a4a', 0.55);
+      paint(g, (x, y) => torso(x, y) && Math.abs(dx(x)) >= 2.5, cloak);
+      paint(g, (x, y) => torso(x, y) && y === 24, shade(cloak, 0.8));
+      sprite(g, ['G...G'], Math.round(C + s * 0.5) - 2, 25, { G: GOLD });
+      break;
+    }
     case 'jacket':
       paint(g, v(6, 4.5), WHITE);
       paint(
@@ -583,6 +623,39 @@ function accessory(recipe: Recipe, g: Grid, s: number, face: Mask): void {
       sprite(g, horn, Math.round(C + s) + 6, 1, { H: '#5b3a6e', h: '#7d5694' }, true);
       return;
     }
+    case 'helmet': {
+      const metal = '#9aa3ad';
+      paint(g, (x, y) => cap(x, y) && y <= 11, metal);
+      paint(g, (x, y) => cap(x, y) && y === 11, shade(metal, 0.75));
+      paint(
+        g,
+        (x, y) => cap(x, y) && y >= 12 && y <= 19 && Math.abs(x + 0.5 - C - s) >= 7.5,
+        metal,
+      );
+      paint(g, (x, y) => Math.abs(x + 0.5 - C - s) <= 0.5 && y >= 11 && y <= 16, shade(metal, 0.7));
+      paint(
+        g,
+        (x, y) => cap(x, y) && y >= 2 && y <= 5 && x + 0.5 < C + s - 2,
+        mix(metal, WHITE, 0.4),
+      );
+      for (let x = Math.round(C + s) - 9; x <= Math.round(C + s) + 9; x += 3)
+        sprite(g, ['G'], x, 10, { G: GOLD });
+      return;
+    }
+    case 'hood': {
+      const outer = ellipse(C + s, 15, 12.6, 12.4);
+      paint(g, (x, y) => outer(x, y) && y <= 25 && !(face(x, y) && y >= 10), shirt);
+      paint(
+        g,
+        (x, y) =>
+          outer(x, y) &&
+          !face(x, y) &&
+          y >= 9 &&
+          (face(x + 1, y) || face(x - 1, y) || face(x, y + 1)),
+        shade(shirt, 0.7),
+      );
+      return;
+    }
     case 'beret':
       paint(g, (x, y) => ellipse(C + s + 1.5, 4.6, 10.5, 3.6)(x, y), shirt);
       paint(g, (x, y) => ellipse(C + s + 1.5, 4.6, 10.5, 3.6)(x, y) && y >= 6, shade(shirt, 0.78));
@@ -671,6 +744,72 @@ function accessory(recipe: Recipe, g: Grid, s: number, face: Mask): void {
   }
 }
 
+const POINTED_EARS: Partial<
+  Record<NonNullable<Recipe['species']>, { rows: string[]; rise: number }>
+> = {
+  goblin: { rows: ['E...', 'EE..', '.EiE', '..Ee'], rise: 2 },
+  elf: { rows: ['E....', 'EE...', '.EE..', '..EiE', '...Ee'], rise: 3 },
+  orc: { rows: ['E..', 'EE.', '.Ee'], rise: 1 },
+};
+
+const leafShape =
+  (cx: number, cy: number, long: number, wide: number, angle: number): Mask =>
+  (x, y) => {
+    const px = x + 0.5 - cx;
+    const py = y + 0.5 - cy;
+    const u = px * Math.cos(angle) + py * Math.sin(angle);
+    const v = -px * Math.sin(angle) + py * Math.cos(angle);
+    return (u / long) ** 2 + (v / wide) ** 2 <= 1;
+  };
+
+function petals(style: NonNullable<Recipe['petals']>, s: number): Mask {
+  const cx = C + s;
+  const cy = 16.6;
+  const ring =
+    (n: number, radius: number, long: number, wide: number, phase = 0): Mask =>
+    (x, y) =>
+      Array.from({ length: n }, (_, k) => phase + (2 * Math.PI * k) / n).some((a) =>
+        leafShape(cx + radius * Math.cos(a), cy + radius * Math.sin(a), long, wide, a)(x, y),
+      );
+  switch (style) {
+    case 'daisy':
+      return ring(14, 10.4, 3.4, 1.7, Math.PI / 14);
+    case 'sunflower':
+      return (x, y) => ring(16, 11.2, 2.6, 1.5)(x, y) || ellipse(cx, cy, 10.6, 10.2)(x, y);
+    case 'tulip':
+      return (x, y) =>
+        y <= cy + 6 &&
+        (ellipse(cx - 6.5, cy - 3, 4.5, 7.5)(x, y) ||
+          ellipse(cx + 6.5, cy - 3, 4.5, 7.5)(x, y) ||
+          ellipse(cx, cy - 6, 5, 8)(x, y));
+    case 'sakura':
+      return (x, y) =>
+        ring(5, 8.6, 4.6, 3.8, -Math.PI / 2)(x, y) && !ring(5, 13.4, 1.4, 1.4, -Math.PI / 2)(x, y);
+  }
+}
+
+function flowerBase(recipe: Recipe, g: Grid, s: number): void {
+  const leaf = '#5f9e4a';
+  const stem = C + s * 0.5;
+  paint(g, (x, y) => y >= 22 && Math.abs(x + 0.5 - stem) <= 1, shade(leaf, 0.82));
+  if (recipe.flowerBase === 'pot') {
+    const pot = recipe.shirtColor;
+    const body: Mask = (x, y) => y >= 27 && Math.abs(x + 0.5 - stem) <= 6.5 - (y - 27) * 0.45;
+    paint(g, leafShape(stem - 3, 25, 2.8, 1.2, -0.5), leaf);
+    paint(g, leafShape(stem + 3, 24.5, 2.8, 1.2, 0.5), shade(leaf, 0.9));
+    paint(g, body, pot);
+    paint(g, (x, y) => body(x, y) && y === 27, mix(pot, WHITE, 0.3));
+    paint(g, (x, y) => body(x, y) && y >= 28 && x + 0.5 > stem + 3, shade(pot, 0.8));
+    return;
+  }
+  const left = leafShape(stem - 4.5, 27, 4.4, 1.9, -0.55);
+  const right = leafShape(stem + 4.5, 25.5, 4.4, 1.9, 0.55);
+  paint(g, left, leaf);
+  paint(g, right, shade(leaf, 0.92));
+  paint(g, leafShape(stem - 4.5, 27, 3.6, 0.5, -0.55), shade(leaf, 0.75));
+  paint(g, leafShape(stem + 4.5, 25.5, 3.6, 0.5, 0.55), shade(leaf, 0.7));
+}
+
 export function pixelTileColor(hair: string): string {
   const [r, g, b] = channels(hair).map((v) => v / 255) as [number, number, number];
   const max = Math.max(r, g, b);
@@ -716,14 +855,43 @@ export function pixelFigure(
         return front(x - Math.round(d * (1 + Math.max(0, y - 20) * 0.4) - d * tuck), y);
       }
     : front;
-  const masks: ReturnType<typeof detailedHair> =
-    recipe.bangs === undefined ? hair(recipe, s, b) : detailedHair(recipe, s, b);
+  const flower = recipe.species === 'flower';
+  const covered = recipe.accessory === 'helmet' || recipe.accessory === 'hood';
+  const bare: Mask = () => false;
+  const petalRing = flower ? petals(recipe.petals ?? 'daisy', s) : bare;
+  const masks: ReturnType<typeof detailedHair> = flower
+    ? {
+        back: petalRing,
+        front: bare,
+        sides: [
+          (x, y) => petalRing(x, y) && x + 0.5 < C + s,
+          (x, y) => petalRing(x, y) && x + 0.5 >= C + s,
+        ],
+      }
+    : covered
+      ? { back: bare, front: bare }
+      : recipe.bangs === undefined
+        ? hair(recipe, s, b)
+        : detailedHair(recipe, s, b);
 
   const body = blank();
-  outfit(recipe, body, s);
+  if (flower) flowerBase(recipe, body, s);
+  else outfit(recipe, body, s);
 
   const back = blank();
-  paint(back, masks.back, shade(hairColor, 0.82));
+  if (flower) {
+    paint(back, petalRing, hairColor);
+    paint(
+      back,
+      (x, y) => petalRing(x, y) && (x + 0.5 - C - s) ** 2 + (y + 0.5 - 16.6) ** 2 < 90,
+      shade(hairColor, 0.84),
+    );
+    paint(
+      back,
+      (x, y) => petalRing(x, y) && x + 0.5 < C + s - 3 && y < 10,
+      mix(hairColor, WHITE, 0.3),
+    );
+  } else paint(back, masks.back, shade(hairColor, 0.82));
   if (masks.bands)
     paint(
       back,
@@ -733,19 +901,49 @@ export function pixelFigure(
 
   const head = blank();
   paint(head, face, skin);
+  const h = recipe.height ?? 0;
+  if (recipe.beard && !flower) {
+    const centre = C + fs * 0.6;
+    const mouthX = Math.round(C - 0.5 + fs * 0.6);
+    const chin: Mask = (x, y) => face(x, y) || face(x, y - 2);
+    const open = (x: number, y: number) => y >= 20 + h && y <= 22 + h && Math.abs(x - mouthX) <= 3;
+    const full: Mask = (x, y) =>
+      chin(x, y) && (y >= 22 + h || (Math.abs(x + 0.5 - centre) >= 4 && y >= 17 + h));
+    const shape: Mask =
+      recipe.beard === 'short'
+        ? (x, y) => chin(x, y) && y >= 22 + h
+        : recipe.beard === 'full'
+          ? full
+          : (x, y) => full(x, y) || (Math.abs(x + 0.5 - centre) <= 1 && y >= 24 && y <= 30);
+    paint(head, (x, y) => shape(x, y) && !open(x, y), shade(hairColor, 0.9));
+    paint(
+      head,
+      (x, y) => shape(x, y) && !open(x, y) && (x + y * 2) % 5 === 0,
+      shade(hairColor, 0.72),
+    );
+  }
   const earY = 15;
   const edge = (side: number) => {
     const xs = [...Array(N).keys()].filter((x) => face(x, earY));
     return side < 0 ? xs[0]! - 1 : xs.at(-1)! + 1;
   };
-  const goblin = recipe.species === 'goblin';
-  if (goblin) {
-    // Long pointed ears drawn over hair: the outer tip rises above the ear line.
-    const ear = ['E...', 'EE..', '.EiE', '..Ee'];
+  const pointed = recipe.species ? POINTED_EARS[recipe.species] : undefined;
+  if (flower) {
+    // A flower has petals instead of ears.
+  } else if (pointed) {
+    // Pointed ears are drawn over hair: the outer tip rises above the ear line.
     const pal = { E: skin, e: shade(skin, 0.86), i: shade(skin, 0.74) };
+    const width = pointed.rows[0]!.length;
     paint(head, masks.front, hairColor);
     for (const ex of turned ? [-d] : [-1, 1])
-      sprite(head, ear, ex < 0 ? edge(ex) - 3 : edge(ex), earY - 2, pal, ex > 0);
+      sprite(
+        head,
+        pointed.rows,
+        ex < 0 ? edge(ex) - (width - 1) : edge(ex),
+        earY - pointed.rise,
+        pal,
+        ex > 0,
+      );
   } else if (!turned)
     for (const ex of [-1, 1])
       sprite(head, ['E', 'E', 'e'], edge(ex), earY, { E: skin, e: shade(skin, 0.86) });
@@ -754,10 +952,10 @@ export function pixelFigure(
       E: skin,
       e: shade(skin, 0.8),
     });
-  if (!goblin) paint(head, masks.front, hairColor);
+  if (!pointed && !flower) paint(head, masks.front, hairColor);
   for (const [x, y] of masks.ties ?? [])
     sprite(back, ['T'], Math.round(x), y, { T: shade(recipe.shirtColor, 0.8) });
-  accessory(recipe, head, s, face);
+  if (!flower) accessory(recipe, head, s, face);
 
   const shadeHair = (g: Grid) => {
     const out = g.map((r) => [...r]);
@@ -821,7 +1019,6 @@ export function pixelFigure(
   const closed = blank();
   const glasses = blank();
   const sp = recipe.spacing ?? 0;
-  const h = recipe.height ?? 0;
   const eyeTop = 15 + h;
   const eyeW = (side: -1 | 1) => (turned && Math.sign(fs) === side ? 3 : 4);
   const eyeX = (side: -1 | 1) => {
@@ -867,9 +1064,15 @@ export function pixelFigure(
     );
   }
   const cx = Math.round(C + fs * (turned ? 0.85 : 0.6));
-  if (recipe.nose === 'dot') sprite(features, ['N'], cx, 18 + h, { N: shade(skin, 0.78) });
-  if (recipe.nose === 'button') sprite(features, ['N'], cx, 18 + h, { N: shade(skin, 0.88) });
-  if (recipe.nose === 'line') sprite(features, ['N', 'N'], cx, 17 + h, { N: shade(skin, 0.82) });
+  if (recipe.species === 'dwarf')
+    sprite(features, ['.N.', 'NnN'], cx - 1, 17 + h, {
+      N: shade(skin, 0.84),
+      n: shade(skin, 0.72),
+    });
+  else if (recipe.nose === 'dot') sprite(features, ['N'], cx, 18 + h, { N: shade(skin, 0.78) });
+  else if (recipe.nose === 'button') sprite(features, ['N'], cx, 18 + h, { N: shade(skin, 0.88) });
+  else if (recipe.nose === 'line')
+    sprite(features, ['N', 'N'], cx, 17 + h, { N: shade(skin, 0.82) });
   const mx = C - 0.5 + fs * 0.6;
   const withMouth = (mouth: readonly string[]) => {
     const layer = features.map((row) => [...row]);
@@ -882,6 +1085,9 @@ export function pixelFigure(
     if (recipe.species === 'goblin')
       for (const tx of [Math.round(mx - 2.5), Math.round(mx + 2.5)])
         sprite(layer, ['T'], tx, 21 + h, { T: TUSK });
+    if (recipe.species === 'orc')
+      for (const tx of [Math.round(mx - 2.5), Math.round(mx + 2.5)])
+        sprite(layer, ['T', 'T'], tx, 20 + h, { T: TUSK });
     if (recipe.cheeks === 'blush') {
       sprite(layer, ['PP'], left.x - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });
       sprite(layer, ['PP'], right.x + right.w - 1, 19 + h, { P: mix(BLUSH, skin, 0.25) });

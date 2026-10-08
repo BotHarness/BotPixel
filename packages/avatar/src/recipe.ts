@@ -154,36 +154,55 @@ export type AvatarColor = (typeof AVATAR_COLORS)[number];
  * Avatar Species: a base on the pixel bust rig. Species share motion and anchors; each sets its
  * own ears, face details and suggested body colors. A recipe with a species is asset version 2.
  */
-export const AVATAR_SPECIES = ['human', 'goblin'] as const;
+export const AVATAR_SPECIES = ['human', 'goblin', 'elf', 'dwarf', 'orc', 'flower'] as const;
 export type AvatarSpecies = (typeof AVATAR_SPECIES)[number];
 /** Optional per-piece hair colors (asset version 2); an absent piece uses `hairColor`. */
 export const AVATAR_PIECE_COLORS = ['leftSideHairColor', 'rightSideHairColor'] as const;
 export type AvatarPieceColor = (typeof AVATAR_PIECE_COLORS)[number];
 
-type BaseRecipe = {
-  schemaVersion: 1;
-  family: 'illustrated';
-  rigVersion: 1;
-} & { [P in AvatarPart]: (typeof AVATAR_PARTS)[P][number] } & Record<AvatarColor, string>;
+/** Part choices that exist only in asset version 2, added after every version 1 choice. */
+export const AVATAR_PARTS_V2 = {
+  ...AVATAR_PARTS,
+  outfit: [...AVATAR_PARTS.outfit, 'armor', 'robe', 'tunic', 'cloak'],
+  accessory: [...AVATAR_PARTS.accessory, 'helmet', 'hood'],
+} as const satisfies { [P in AvatarPart]: readonly string[] };
+/** Optional asset version 2 parts; an absent part is not drawn (or uses the first choice). */
+export const AVATAR_EXTRA_PARTS = {
+  beard: ['short', 'full', 'braided'],
+  petals: ['daisy', 'sunflower', 'tulip', 'sakura'],
+  flowerBase: ['leaves', 'pot'],
+} as const;
+export type AvatarExtraPart = keyof typeof AVATAR_EXTRA_PARTS;
+
+type Meta = { schemaVersion: 1; family: 'illustrated'; rigVersion: 1 } & Record<
+  AvatarColor,
+  string
+>;
 
 /** Asset version 1: optional split hair and geometry, all six or none. */
-export type PixelAvatarRecipeV1 = BaseRecipe & { assetVersion: 1 } & {
+export type PixelAvatarRecipeV1 = Meta & { assetVersion: 1 } & {
+  [P in AvatarPart]: (typeof AVATAR_PARTS)[P][number];
+} & {
   [P in AvatarHairPart]?: (typeof AVATAR_PARTS)['hair'][number];
 } & { [P in AvatarRange]?: number } & {
   species?: never;
   rightSideHair?: never;
-} & { [P in AvatarPieceColor]?: never };
+} & { [P in AvatarPieceColor | AvatarExtraPart]?: never };
 
 /**
  * Asset version 2: a species, the full split hair and geometry, a separate right side hair
  * (`sideHair` is then the left side) and optional per-side hair colors.
  */
-export type PixelAvatarRecipeV2 = BaseRecipe & { assetVersion: 2 } & {
+export type PixelAvatarRecipeV2 = Meta & { assetVersion: 2 } & {
+  [P in AvatarPart]: (typeof AVATAR_PARTS_V2)[P][number];
+} & {
   [P in AvatarHairPart]: (typeof AVATAR_PARTS)['hair'][number];
 } & { [P in AvatarRange]: number } & {
   species: AvatarSpecies;
   rightSideHair: (typeof AVATAR_HAIR_PARTS)['sideHair'][number];
-} & { [P in AvatarPieceColor]?: string };
+} & { [P in AvatarPieceColor]?: string } & {
+  [P in AvatarExtraPart]?: (typeof AVATAR_EXTRA_PARTS)[P][number];
+};
 
 export type PixelAvatarRecipe = PixelAvatarRecipeV1 | PixelAvatarRecipeV2;
 
@@ -219,7 +238,10 @@ export function isPixelAvatarRecipe(value: unknown): value is PixelAvatarRecipe 
   if (detailed !== 0 && detailed !== DETAIL_KEYS.length) return false;
   const v2 = r['assetVersion'] === 2;
   const pieces = AVATAR_PIECE_COLORS.filter((key) => Object.hasOwn(r, key));
-  const v2Keys = v2 ? 2 + pieces.length : 0;
+  const extras = (Object.keys(AVATAR_EXTRA_PARTS) as AvatarExtraPart[]).filter((key) =>
+    Object.hasOwn(r, key),
+  );
+  const v2Keys = v2 ? 2 + pieces.length + extras.length : 0;
   if (Object.keys(r).length !== Object.keys(DEFAULT_RECIPE).length + detailed + v2Keys)
     return false;
   if (
@@ -227,9 +249,11 @@ export function isPixelAvatarRecipe(value: unknown): value is PixelAvatarRecipe 
     (detailed === 0 ||
       !(AVATAR_SPECIES as readonly unknown[]).includes(r['species']) ||
       !(AVATAR_HAIR_PARTS.sideHair as readonly unknown[]).includes(r['rightSideHair']) ||
-      !pieces.every((key) => typeof r[key] === 'string' && /^#[\da-f]{6}$/iu.test(r[key])))
+      !pieces.every((key) => typeof r[key] === 'string' && /^#[\da-f]{6}$/iu.test(r[key])) ||
+      !extras.every((key) => (AVATAR_EXTRA_PARTS[key] as readonly unknown[]).includes(r[key])))
   )
     return false;
+  const catalog: { [P in AvatarPart]: readonly string[] } = v2 ? AVATAR_PARTS_V2 : AVATAR_PARTS;
   return (
     (detailed === 0 ||
       ((Object.keys(AVATAR_HAIR_PARTS) as AvatarHairPart[]).every(
@@ -246,10 +270,7 @@ export function isPixelAvatarRecipe(value: unknown): value is PixelAvatarRecipe 
     r['family'] === 'illustrated' &&
     (r['assetVersion'] === 1 || v2) &&
     r['rigVersion'] === 1 &&
-    PART_KEYS.every(
-      (key) =>
-        typeof r[key] === 'string' && (AVATAR_PARTS[key] as readonly string[]).includes(r[key]),
-    ) &&
+    PART_KEYS.every((key) => typeof r[key] === 'string' && catalog[key].includes(r[key])) &&
     AVATAR_COLORS.every((key) => typeof r[key] === 'string' && /^#[\da-f]{6}$/iu.test(r[key]))
   );
 }
@@ -269,8 +290,26 @@ export function canonicalRecipe(recipe: PixelAvatarRecipe): PixelAvatarRecipe {
     canonical['rightSideHair'] = recipe.rightSideHair;
     for (const key of AVATAR_PIECE_COLORS)
       if (recipe[key] !== undefined) canonical[key] = recipe[key].toLowerCase();
+    for (const key of Object.keys(AVATAR_EXTRA_PARTS) as AvatarExtraPart[])
+      if (recipe[key] !== undefined) canonical[key] = recipe[key];
   }
   return canonical as PixelAvatarRecipe;
+}
+
+const HAIR_PIECES = ['bangs', 'sideHair', 'rightSideHair', 'backHair'] as const;
+
+/**
+ * Saved choices the recipe keeps but does not draw: a flower shows petals and a stem instead of
+ * hair, outfit, beard and headwear, and a helmet or hood covers the hair. The choices return when
+ * the species or headwear changes back.
+ */
+export function hiddenChoices(recipe: PixelAvatarRecipe): readonly string[] {
+  if (recipe.species === 'flower')
+    return [...HAIR_PIECES, 'outfit', 'accessory', ...(recipe.beard ? ['beard'] : [])];
+  const hidden: string[] = [];
+  if (recipe.accessory === 'helmet' || recipe.accessory === 'hood') hidden.push(...HAIR_PIECES);
+  if (recipe.species === 'dwarf') hidden.push('nose');
+  return hidden;
 }
 
 /**
@@ -414,6 +453,10 @@ export const seededRecipe: (seed: string) => PixelAvatarRecipe =
 export const AVATAR_SPECIES_SWATCHES: Record<AvatarSpecies, readonly string[]> = {
   human: AVATAR_SWATCHES.skinColor,
   goblin: ['#9cc464', '#7fae4f', '#6a9a45', '#b3cf7a', '#5c8a4a', '#8fa86a'],
+  elf: ['#fbe7d6', '#f2d3c0', '#e2c9b0', '#d9c7e8', '#b9c6dd', '#8f7fa8'],
+  dwarf: ['#f2c4a0', '#e9b08a', '#e0a87e', '#c68863', '#f0b8a0', '#9a6142'],
+  orc: ['#8a9a5b', '#6f8a4e', '#7d8c6a', '#5f6f4a', '#9aa070', '#6a7a7a'],
+  flower: ['#f6d36b', '#f2b84b', '#ffe3cf', '#e8a85a', '#c98b4a', '#f4f1ec'],
 };
 
 const preset = (parts: Partial<PixelAvatarRecipeV1>): PixelAvatarRecipeV1 => ({

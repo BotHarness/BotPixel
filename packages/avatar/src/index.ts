@@ -8,8 +8,10 @@ export {
 } from './figure.js';
 export {
   AVATAR_COLORS,
+  AVATAR_EXTRA_PARTS,
   AVATAR_HAIR_PARTS,
   AVATAR_PARTS,
+  AVATAR_PARTS_V2,
   AVATAR_PIECE_COLORS,
   AVATAR_PRESETS,
   AVATAR_RANGES,
@@ -20,10 +22,12 @@ export {
   canonicalRecipe,
   createSeededRecipe,
   detailedRecipe,
+  hiddenChoices,
   isPixelAvatarRecipe,
   seededRecipe,
   withSpecies,
   type AvatarColor,
+  type AvatarExtraPart,
   type AvatarHairPart,
   type AvatarPart,
   type AvatarPieceColor,

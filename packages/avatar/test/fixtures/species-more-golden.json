@@ -1,0 +1,132 @@
+{
+  "elf": {
+    "front": "5215edb346d77629",
+    "turns": "210e6ecb819b147b",
+    "mouths": "0ee8ce0e8e8911d9"
+  },
+  "dwarf": {
+    "front": "07f7085fb8193e96",
+    "turns": "22474f2c3aced89f",
+    "mouths": "fc88403e13a1f315"
+  },
+  "orc": {
+    "front": "840822625620149b",
+    "turns": "9119c3b1d43a9a0e",
+    "mouths": "9ed85c495e5a2bd5"
+  },
+  "flower": {
+    "front": "f9c01acc632e4f60",
+    "turns": "c7c9cbec70b1db20",
+    "mouths": "60bf1d2ed441e813"
+  },
+  "beard-short-round": {
+    "front": "1f02b7eee00f2cc0",
+    "turns": "7f8860471fd456c1",
+    "mouths": "09cd8dd63a670092"
+  },
+  "beard-short-square": {
+    "front": "fe388ce81f17c441",
+    "turns": "03cf0549feafedc0",
+    "mouths": "03064abd0584fb6e"
+  },
+  "beard-full-round": {
+    "front": "00c8c4c383c6a44e",
+    "turns": "e9a73a870c3b0792",
+    "mouths": "fdedb118d880acef"
+  },
+  "beard-full-square": {
+    "front": "64f2fc3bca17e36c",
+    "turns": "e05a54f8db2e13fe",
+    "mouths": "0f5fbfc04b13069b"
+  },
+  "beard-braided-round": {
+    "front": "caff515eafe82628",
+    "turns": "790a2002bc94d397",
+    "mouths": "fef8930d85fd2e99"
+  },
+  "beard-braided-square": {
+    "front": "6a6fbe19a176af42",
+    "turns": "8910eb9359293718",
+    "mouths": "9f3d7060f75f8654"
+  },
+  "outfit-armor": {
+    "front": "ccc1b18b36999f82",
+    "turns": "3058a63e7b6d50f8",
+    "mouths": "fc88403e13a1f315"
+  },
+  "outfit-robe": {
+    "front": "cf20c43748127470",
+    "turns": "a93f8ab2bab8503e",
+    "mouths": "fc88403e13a1f315"
+  },
+  "outfit-tunic": {
+    "front": "d9f910b06a8b6f71",
+    "turns": "c171777eab438686",
+    "mouths": "fc88403e13a1f315"
+  },
+  "outfit-cloak": {
+    "front": "d575fc517f876550",
+    "turns": "add8016a0bfec1b6",
+    "mouths": "fc88403e13a1f315"
+  },
+  "accessory-helmet": {
+    "front": "db5fc770c35b7e1a",
+    "turns": "d0dcbaac42b66278",
+    "mouths": "27defd729e331400"
+  },
+  "accessory-hood": {
+    "front": "066f3563fbc4ad43",
+    "turns": "b6436098c853a1ac",
+    "mouths": "cc9c702d8cc945c4"
+  },
+  "flower-daisy-leaves": {
+    "front": "f9c01acc632e4f60",
+    "turns": "c7c9cbec70b1db20",
+    "mouths": "60bf1d2ed441e813"
+  },
+  "flower-daisy-pot": {
+    "front": "108a550b214cf6ce",
+    "turns": "e01a84cdeec5689e",
+    "mouths": "aaa80df5b092217e"
+  },
+  "flower-sunflower-leaves": {
+    "front": "8b9e4e305e51368f",
+    "turns": "72b3e432388ab241",
+    "mouths": "0a694a9eed210aec"
+  },
+  "flower-sunflower-pot": {
+    "front": "2161b31b5ed0dcda",
+    "turns": "4e6454723dd5a26a",
+    "mouths": "53a90311dc500685"
+  },
+  "flower-tulip-leaves": {
+    "front": "c7048c3ed1ea478e",
+    "turns": "6ff47e386fd351c7",
+    "mouths": "f062601bc33b553b"
+  },
+  "flower-tulip-pot": {
+    "front": "c212a03195cdea90",
+    "turns": "924d3e3e5d7b2508",
+    "mouths": "f062601bc33b553b"
+  },
+  "flower-sakura-leaves": {
+    "front": "1f84989f445e42b1",
+    "turns": "fa9062085815c6d2",
+    "mouths": "5e1e9a4412658ca9"
+  },
+  "flower-sakura-pot": {
+    "front": "45c303ee5ba66025",
+    "turns": "a0a55dc1f7d694cf",
+    "mouths": "08b9c971b6d0b6ae"
+  },
+  "flower-two-tone": {
+    "front": "7eb3540da7a2954b",
+    "turns": "cc3ecdca62082d93",
+    "mouths": "e236ed1199967f8a"
+  },
+  "dwarf-extremes": {
+    "front": "74207120892ffbe9",
+    "turns": "764841ff6d7195db",
+    "mouths": "0d5a78f1f62a5521"
+  }
+}
