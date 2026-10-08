@@ -455,6 +455,38 @@ export function createSeededRecipe(namespace: string): (seed: string) => PixelAv
   };
 }
 
+/**
+ * A version 2 name-seeded recipe factory over every species. Species are equally likely; a
+ * person may get a beard or a version 2 outfit, and a flower gets petals and a base. Version 1
+ * factories (`createSeededRecipe`) keep their faces, so a consumer chooses per identity which
+ * seed version it was created with.
+ */
+export function createSeededRecipeV2(namespace: string): (seed: string) => PixelAvatarRecipeV2 {
+  const base = createSeededRecipe(`${namespace}:base`);
+  return (seed) => {
+    const random = seededRandom(`${namespace}:${seed.trim().toLowerCase()}`);
+    const pick = <T>(values: readonly T[]) => values[Math.floor(random() * values.length)]!;
+    const species = pick(AVATAR_SPECIES);
+    const recipe: PixelAvatarRecipeV2 = {
+      ...withSpecies(base(seed), species),
+      skinColor: pick(AVATAR_SPECIES_SWATCHES[species]),
+    };
+    if (species === 'flower')
+      return {
+        ...recipe,
+        petals: pick(AVATAR_EXTRA_PARTS.petals),
+        flowerBase: pick(AVATAR_EXTRA_PARTS.flowerBase),
+      };
+    const beard = random() < 0.3 ? pick(AVATAR_EXTRA_PARTS.beard) : undefined;
+    const outfit = random() < 0.25 ? pick(AVATAR_PARTS_V2.outfit.slice(-4)) : recipe.outfit;
+    return { ...recipe, outfit, ...(beard ? { beard } : {}) };
+  };
+}
+
+/** Version 2 counterpart of `seededRecipe` (BotHarness's namespace). */
+export const seededRecipeV2: (seed: string) => PixelAvatarRecipeV2 =
+  createSeededRecipeV2('botharness-avatar-v2');
+
 /** The same name always gives the same face (BotHarness's namespace). */
 export const seededRecipe: (seed: string) => PixelAvatarRecipe =
   createSeededRecipe('botharness-avatar');

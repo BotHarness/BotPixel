@@ -134,6 +134,36 @@
     "turns": "2d42e3f9075c57db",
     "mouths": "5b997c26249730e9"
   },
+  "seed-v2-Ada": {
+    "front": "2c83354c4f2bfc1d",
+    "turns": "53412b05f6d16e8a",
+    "mouths": "1cafd08079c3aa6d"
+  },
+  "seed-v2-Grace": {
+    "front": "2e759f757e74ea8c",
+    "turns": "0023b4ee4eeb42dc",
+    "mouths": "3507341cffa95b6c"
+  },
+  "seed-v2-Linus": {
+    "front": "148ad21f26cd646f",
+    "turns": "bf9fdac6029d23c9",
+    "mouths": "17c8adf1b547264d"
+  },
+  "seed-v2-DeepSeekBot": {
+    "front": "ee9bd7d0074b2970",
+    "turns": "b29ceaeb4f4b892e",
+    "mouths": "6e1c2b03e91e0f37"
+  },
+  "seed-v2-Gimli": {
+    "front": "e96ad6a0c3a2bbd5",
+    "turns": "bba0f25e8f34f527",
+    "mouths": "1bc89d032efe42fb"
+  },
+  "seed-v2-Daisy": {
+    "front": "5e91746f1f3ac026",
+    "turns": "81cbbd98734b2d6e",
+    "mouths": "cc834e3d2d0d1124"
+  },
   "dwarf-extremes": {
     "front": "74207120892ffbe9",
     "turns": "764841ff6d7195db",

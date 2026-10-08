@@ -11,6 +11,8 @@ import {
   isPixelAvatarRecipe,
   pixelAvatarSvg,
   pixelFigure,
+  seededRecipe,
+  seededRecipeV2,
   withSpecies,
   type PixelAvatarRecipe,
 } from '../src/index.js';
@@ -127,11 +129,25 @@ describe('medieval species, beards, outfits and headwear', () => {
       leftSideHairColor: '#f06292',
       rightSideHairColor: '#3fc1b8',
     };
+    for (const name of ['Ada', 'Grace', 'Linus', 'DeepSeekBot', 'Gimli', 'Daisy'])
+      recipes[`seed-v2-${name}`] = seededRecipeV2(name);
     recipes['dwarf-extremes'] = { ...dwarf, beard: 'braided', height: 1, spacing: 1 };
     const actual = Object.fromEntries(Object.entries(recipes).map(([k, r]) => [k, render(r)]));
     const file = new URL('./fixtures/species-more-golden.json', import.meta.url);
     if (process.env['BOTPIXEL_WRITE_SPECIES_GOLDEN'] === '1')
       writeFileSync(file, `${JSON.stringify(actual, null, 2)}\n`);
     expect(actual).toEqual(JSON.parse(readFileSync(file, 'utf8')));
+  });
+
+  it('seeds a valid, stable face from every species without changing version 1 seeds', () => {
+    const names = Array.from({ length: 300 }, (_, i) => `bot-${i}`);
+    const faces = names.map((name) => seededRecipeV2(name));
+    for (const face of faces) expect(isPixelAvatarRecipe(face)).toBe(true);
+    expect(new Set(faces.map((face) => face.species))).toEqual(
+      new Set(['human', 'goblin', 'elf', 'dwarf', 'orc', 'flower']),
+    );
+    expect(faces.some((face) => face.beard)).toBe(true);
+    expect(seededRecipeV2('Ada')).toEqual(seededRecipeV2(' ada '));
+    expect(seededRecipe('Ada').assetVersion).toBe(1);
   });
 });
