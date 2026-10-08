@@ -355,17 +355,28 @@ export function gradientPartLayer(
       out[y]![x] = { color, tone };
     }
   };
-  paint(region(fx, fy), from, to, (x) => x);
-  if (options.mirror) {
-    const mirrored = (point: readonly [number, number]) =>
-      [mirrorPartX(slot, point[0]), point[1]] as const;
-    paint(
-      region(mirrorPartX(slot, fx), fy).filter(([x, y]) => out[y]![x] === layer[y]![x]),
-      mirrored(from),
-      mirrored(to),
-      (x) => mirrorPartX(slot, x),
-    );
+  const own = region(fx, fy);
+  if (!options.mirror) {
+    paint(own, from, to, (x) => x);
+    return out;
   }
+  const mx = mirrorPartX(slot, fx);
+  const mirroredCells = region(mx, fy);
+  const inOwn = new Set(own.map(([x, y]) => y * width + x));
+  const inMirrored = new Set(mirroredCells.map(([x, y]) => y * width + x));
+  const startSide = (x: number) => x < width / 2 === fx < width / 2;
+  paint(
+    own.filter(([x, y]) => startSide(x) || !inMirrored.has(y * width + x)),
+    from,
+    to,
+    (x) => x,
+  );
+  paint(
+    mirroredCells.filter(([x, y]) => !startSide(x) || !inOwn.has(y * width + x)),
+    [mx, fy],
+    [mirrorPartX(slot, to[0]), to[1]],
+    (x) => mirrorPartX(slot, x),
+  );
   return out;
 }
 

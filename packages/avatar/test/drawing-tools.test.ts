@@ -109,6 +109,23 @@ describe('gradient tool', () => {
     for (let y = 0; y < 16; y++)
       for (let x = 0; x < 15; x++) expect(out[y]![mirrorPartX('headpiece', x)]).toEqual(out[y]![x]);
   });
+
+  it('mirrors symmetrically inside a region shared by both halves', () => {
+    const out = gradientPartLayer(
+      'headpiece',
+      emptyPartLayer('headpiece'),
+      [2, 3],
+      [12, 3],
+      'hairColor',
+      2,
+      -2,
+      { mirror: true },
+    );
+    expect(out[3]![2]).toEqual({ color: 'hairColor', tone: 2 });
+    expect(out[3]![12]).toEqual({ color: 'hairColor', tone: -2 });
+    for (let y = 0; y < 16; y++)
+      for (let x = 0; x < 16; x++) expect(out[y]![mirrorPartX('headpiece', x)]).toEqual(out[y]![x]);
+  });
 });
 
 describe('noise and shade tools', () => {
