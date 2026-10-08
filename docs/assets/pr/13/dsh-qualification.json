@@ -1,0 +1,35 @@
+{
+  "capture": "Continuous silent official Chrome DevTools MCP in real isolated DSH0.2.0-rc.1; remux only, no reencoding",
+  "proofs": [
+    {
+      "variant": "before",
+      "hostCode": "e4926548",
+      "pixelAvatar": "formal 0.5.0",
+      "actualCanonicalBotReply": true,
+      "bodyLength": 420,
+      "samples": 227,
+      "mouthStates": ["saved", "closed", "half-open", "open"],
+      "viewport": [1559, 865],
+      "locale": "zh-CN",
+      "theme": "light"
+    },
+    {
+      "variant": "after",
+      "hostCode": "e4926548",
+      "pixelAvatar": "local e6f2c6c candidate with speechMouthVersion2",
+      "actualCanonicalBotReply": true,
+      "bodyLength": 420,
+      "samples": 199,
+      "mouthStates": ["saved", "closed", "half-open", "open"],
+      "viewport": [1559, 865],
+      "locale": "zh-CN",
+      "theme": "light"
+    }
+  ],
+  "limits": [
+    "No synthetic SSE, DOM mouth forcing or Session rewrites",
+    "Same Profile, face, exact text, viewport and theme; arrivals, speech frame, background history and roaming position are not pixel-matched",
+    "The installed candidate was built from e6f2c6c with package metadata0.5.0, before preparing0.5.1; no npm publication is implied",
+    "Not audio or performance qualification"
+  ]
+}
