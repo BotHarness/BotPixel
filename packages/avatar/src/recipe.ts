@@ -217,6 +217,14 @@ export const CUSTOM_PART_KEYS = {
   leftSideHair: 'leftSideHairPart',
   rightSideHair: 'rightSideHairPart',
   backHair: 'backHairPart',
+  outfit: 'outfitPart',
+  accessory: 'accessoryPart',
+  beard: 'beardPart',
+  glasses: 'glassesPart',
+  nose: 'nosePart',
+  cheeks: 'cheeksPart',
+  petals: 'petalsPart',
+  flowerBase: 'flowerBasePart',
 } as const satisfies Record<PartSlot, string>;
 export type CustomPartKey = (typeof CUSTOM_PART_KEYS)[PartSlot];
 const PART_KEY_ENTRIES = Object.entries(CUSTOM_PART_KEYS) as [PartSlot, CustomPartKey][];
@@ -351,10 +359,14 @@ export function hiddenChoices(recipe: PixelAvatarRecipe): readonly string[] {
       'nose',
       'cheeks',
       'glasses',
-      ...(recipe.beard ? ['beard'] : []),
+      ...(recipe.beard || wornPart(recipe, 'beard') ? ['beard'] : []),
     ];
   const hidden: string[] = [];
-  if (recipe.accessory === 'helmet' || recipe.accessory === 'hood') hidden.push(...HAIR_PIECES);
+  if (
+    (recipe.accessory === 'helmet' || recipe.accessory === 'hood') &&
+    !wornPart(recipe, 'accessory')
+  )
+    hidden.push(...HAIR_PIECES);
   if (recipe.species === 'dwarf') hidden.push('nose');
   return hidden;
 }
