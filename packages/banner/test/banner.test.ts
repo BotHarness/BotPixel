@@ -75,6 +75,14 @@ describe('pixels', () => {
           expect(at(image, x * 4 + dx, y * 4 + dy)).toEqual(at(base, x, y));
   });
 
+  it('scales RGBA views that start at an unaligned byte offset', () => {
+    const base = pixelBannerPixels({ scene: 'desert', seed: 5 });
+    const shifted = new Uint8ClampedArray(base.data.length + 1);
+    shifted.set(base.data, 1);
+    const view = { ...base, data: shifted.subarray(1) };
+    expect(scalePixels(view, 2).data).toEqual(scalePixels(base, 2).data);
+  });
+
   it('gives different seeds different pictures and the same seed the same one', () => {
     const a = pixelBannerPixels({ scene: 'mountain', seed: 1 }).data;
     expect(pixelBannerPixels({ scene: 'mountain', seed: 1 }).data).toEqual(a);

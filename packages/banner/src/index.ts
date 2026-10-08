@@ -66,11 +66,8 @@ export function scalePixels(image: PixelBannerImage, scale: number): PixelBanner
   const width = image.width * scale;
   const height = image.height * scale;
   const data = new Uint8ClampedArray(width * height * 4);
-  const source = new Uint32Array(
-    image.data.buffer,
-    image.data.byteOffset,
-    image.width * image.height,
-  );
+  const bytes = image.data.byteOffset % 4 === 0 ? image.data : new Uint8ClampedArray(image.data);
+  const source = new Uint32Array(bytes.buffer, bytes.byteOffset, image.width * image.height);
   const target = new Uint32Array(data.buffer);
   for (let y = 0; y < height; y++) {
     const row = Math.floor(y / scale) * image.width;
