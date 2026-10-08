@@ -14,13 +14,14 @@ import {
   withHeadpiece,
   withSpecies,
   wornPart,
+  type HairPartSlot,
   type PartCell,
   type PixelAvatarRecipe,
   type PixelCustomPart,
 } from '../src/index.js';
 
 const base = withSpecies(DEFAULT_RECIPE, 'human');
-const wearStart = (recipe: PixelAvatarRecipe, slots = HAIR_PART_SLOTS) =>
+const wearStart = (recipe: PixelAvatarRecipe, slots: readonly HairPartSlot[] = HAIR_PART_SLOTS) =>
   slots.reduce<PixelAvatarRecipe>(
     (current, slot) => withCustomPart(current, slot, hairPieceStart(recipe, slot)),
     recipe,
@@ -50,6 +51,26 @@ describe('drawn hair pieces', () => {
         }
     },
   );
+
+  it('turns an unchanged copy exactly like the built-in piece', () => {
+    const turned = (recipe: PixelAvatarRecipe) => pixelAvatarSvg(recipe, { turns: AVATAR_TURNS });
+    // Wolf back hair is notched on a tile-fixed pattern, so its turned mask is no pure shift; a
+    // drawn copy keeps the notches it was drawn with and moves with the back-hair offset.
+    for (const backHair of AVATAR_HAIR_PARTS.backHair.filter((style) => style !== 'wolf')) {
+      const recipe = { ...base, backHair } as PixelAvatarRecipe;
+      expect(turned(wearStart(recipe, ['backHair'])), backHair).toBe(turned(recipe));
+    }
+    for (const bangs of AVATAR_HAIR_PARTS.bangs) {
+      const recipe = { ...base, bangs } as PixelAvatarRecipe;
+      expect(turned(wearStart(recipe, ['bangs'])), bangs).toBe(turned(recipe));
+    }
+    for (const sideHair of AVATAR_HAIR_PARTS.sideHair) {
+      const recipe = { ...base, sideHair, rightSideHair: sideHair } as PixelAvatarRecipe;
+      expect(turned(wearStart(recipe, ['leftSideHair', 'rightSideHair'])), sideHair).toBe(
+        turned(recipe),
+      );
+    }
+  });
 
   it('keeps per-side hair colors on drawn side pieces', () => {
     const recipe = { ...base, sideHair: 'long' as const, leftSideHairColor: '#3fc1b8' };

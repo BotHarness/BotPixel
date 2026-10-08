@@ -901,17 +901,30 @@ export function pixelFigure(
     const part = builtin.pieces ? wornPart(recipe, slot) : undefined;
     return part ? [{ slot, part }] : [];
   });
-  const live = (cells: readonly PartCell[]): Mask => {
+  const live = (cells: readonly PartCell[], shift: number): Mask => {
     const keys = new Set(
       cells.flatMap(([x, y, color, tone]) =>
-        color === 'hairColor' && tone === 0 ? [`${x + s},${y}`] : [],
+        color === 'hairColor' && tone === 0 ? [`${x + shift},${y}`] : [],
       ),
     );
     return (x, y) => keys.has(`${x},${y}`);
   };
+  const backShift = (): number => {
+    if (s === b || !builtin.pieces) return s;
+    const front = detailedHair(detailedRecipe(recipe), 0, 0).pieces!.backHair;
+    const misses = (shift: number) => {
+      let count = 0;
+      for (let y = 0; y < N; y++)
+        for (let x = -4; x < N + 4; x++)
+          if (front(x, y) !== builtin.pieces!.backHair(x + shift, y)) count++;
+      return count;
+    };
+    return misses(b) < misses(s) ? b : s;
+  };
   const piece = (slot: HairPartSlot): Mask => {
     const part = drawnHair.find((drawn) => drawn.slot === slot)?.part;
-    return part ? live(part.front) : builtin.pieces![slot];
+    if (!part) return builtin.pieces![slot];
+    return live(part.front, slot === 'backHair' ? backShift() : s);
   };
   const masks: ReturnType<typeof detailedHair> =
     drawnHair.length === 0
