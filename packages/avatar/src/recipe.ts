@@ -273,7 +273,7 @@ const PART_KEY_ENTRIES = Object.entries(CUSTOM_PART_KEYS) as [PartSlot, CustomPa
  */
 export type PixelAvatarRecipeV3 = Omit<PixelAvatarRecipeV2, 'assetVersion' | CustomPartKey> & {
   assetVersion: 3;
-} & { [P in CustomPartKey]?: PixelCustomPart };
+} & { [P in Exclude<CustomPartKey, 'patternPart'>]?: PixelCustomPart } & { patternPart?: never };
 
 /**
  * Asset version 4: version 2 with a color for every hair piece, a single `strand`, and the
@@ -338,6 +338,7 @@ export function isPixelAvatarRecipe(value: unknown): value is PixelAvatarRecipe 
     ([slot, key]) => Object.hasOwn(r, key) && !(slot === 'headpiece' && builtInHead),
   );
   if (v3 ? worn.length === 0 : !v4 && worn.length !== 0) return false;
+  if (!v4 && Object.hasOwn(r, CUSTOM_PART_KEYS.pattern)) return false;
   const newer = [...AVATAR_PIECE_COLORS_V4, 'strand', 'pattern'].filter((key) =>
     Object.hasOwn(r, key),
   );
@@ -459,6 +460,7 @@ export function hiddenChoices(recipe: PixelAvatarRecipe): readonly string[] {
       'cheeks',
       'glasses',
       ...(recipe.beard || wornPart(recipe, 'beard') ? ['beard'] : []),
+      ...(recipe.pattern || wornPart(recipe, 'pattern') ? ['pattern'] : []),
     ];
   const hidden: string[] = [];
   if (
@@ -543,12 +545,16 @@ export function withCustomPart(
   part: PixelCustomPart | undefined,
 ): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 | PixelAvatarRecipeV4 {
   const base: Record<string, unknown> = {
-    ...(recipe.assetVersion === 1 ? withSpecies(recipe, 'human') : recipe),
+    ...(slot === 'pattern' && part !== undefined
+      ? withPieces(recipe)
+      : recipe.assetVersion === 1
+        ? withSpecies(recipe, 'human')
+        : recipe),
   };
   const key = CUSTOM_PART_KEYS[slot];
   delete base[key];
   if (part !== undefined) base[key] = canonicalCustomPart({ ...part, slot });
-  if (recipe.assetVersion === 4) return base as PixelAvatarRecipeV4;
+  if (base['assetVersion'] === 4) return base as PixelAvatarRecipeV4;
   const wearing = PART_KEY_ENTRIES.some(([, k]) => base[k] !== undefined);
   return { ...base, assetVersion: wearing ? 3 : 2 } as PixelAvatarRecipeV2 | PixelAvatarRecipeV3;
 }

@@ -112,6 +112,24 @@ describe('animal species with patterns (asset version 4)', () => {
     );
   });
 
+  it('keeps the pattern slot out of version 3 and reports a hidden pattern on a flower', () => {
+    const v3 = withCustomPart(withSpecies(DEFAULT_RECIPE, 'human'), 'bangs', {
+      slot: 'bangs',
+      front: [[16, 4, 'hairColor', 0]],
+      back: [],
+    });
+    expect(v3.assetVersion).toBe(3);
+    const pattern = {
+      slot: 'pattern' as const,
+      front: [[10, 12, 'skinColor', -1] as const],
+      back: [],
+    };
+    expect(isPixelAvatarRecipe({ ...v3, patternPart: pattern })).toBe(false);
+    expect(withCustomPart(v3, 'pattern', pattern).assetVersion).toBe(4);
+    const flower = withSpecies({ ...cat, pattern: 'spots' }, 'flower');
+    expect(hiddenChoices(flower)).toContain('pattern');
+  });
+
   it('matches the animal golden output', () => {
     const recipes: Record<string, PixelAvatarRecipe> = {};
     for (const species of AVATAR_ANIMAL_SPECIES) {
