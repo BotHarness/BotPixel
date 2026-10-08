@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AVATAR_ANIMAL_SPECIES,
   AVATAR_PARTS,
+  AVATAR_PATTERNS,
   AVATAR_PRESETS,
   AVATAR_TURNS,
   DEFAULT_RECIPE,
   detailedRecipe,
   pixelAvatarSvg,
+  withSpecies,
   type PixelAvatarRecipe,
 } from '../src/index.js';
 
@@ -43,7 +46,15 @@ describe('optional speech mouth rig', () => {
   });
 
   it('opts into a flatter full opening without changing the accepted speech layers or saved artwork', () => {
-    for (const recipe of [DEFAULT_RECIPE, ...AVATAR_PRESETS, detailedRecipe(DEFAULT_RECIPE)]) {
+    const recipes = [
+      DEFAULT_RECIPE,
+      ...AVATAR_PRESETS,
+      detailedRecipe(DEFAULT_RECIPE),
+      ...AVATAR_ANIMAL_SPECIES.flatMap((species) =>
+        AVATAR_PATTERNS.map((pattern) => ({ ...withSpecies(DEFAULT_RECIPE, species), pattern })),
+      ),
+    ];
+    for (const recipe of recipes) {
       const options = { turns: AVATAR_TURNS, mouthLayers: true };
       const original = pixelAvatarSvg(recipe, options);
       const legacy = pixelAvatarSvg(recipe, { ...options, speechMouthVersion: 1 });

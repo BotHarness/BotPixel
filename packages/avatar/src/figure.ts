@@ -10,9 +10,13 @@ import {
 import {
   AVATAR_COLORS,
   AVATAR_PIECE_COLORS,
+  AVATAR_PIECE_COLORS_V4,
+  builtInHeadpiece,
   detailedRecipe,
+  isAnimalSpecies,
   hiddenChoices,
   wornPart,
+  type AvatarAnimalSpecies,
   type PixelAvatarRecipe,
 } from './recipe.js';
 
@@ -377,6 +381,19 @@ function hair(
   }
 }
 
+const STRANDS: Record<NonNullable<Recipe['strand']>, { rows: string[]; dx: number }> = {
+  ahoge: { rows: ['XX.', '.XX', '.XX'], dx: 0 },
+  curl: { rows: ['.XX.', 'X..X', '..XX', '.X..'], dx: -1 },
+  double: { rows: ['X...X', '.X.X.', '.X.X.'], dx: -2 },
+};
+
+function strandMask(style: NonNullable<Recipe['strand']>, s: number): Mask {
+  const { rows, dx } = STRANDS[style];
+  const top = 4 - rows.length;
+  const left = Math.round(C + s) + dx;
+  return (x, y) => rows[y - top]?.[x - left] === 'X';
+}
+
 function detailedHair(
   recipe: Recipe,
   s: number,
@@ -388,6 +405,7 @@ function detailedHair(
   bands?: boolean;
   sides?: [Mask, Mask];
   pieces?: Record<HairPartSlot, Mask>;
+  strand?: Mask;
 } {
   const of = (style: Recipe['hair'] | undefined) =>
     hair({ ...recipe, hair: style ?? 'none' }, s, b);
@@ -410,8 +428,14 @@ function detailedHair(
       ? bangs.front(x, y) || back.front(x, y)
       : Math.abs(x + 0.5 - C - s) < 7 && bangs.front(x, y);
   const behind = length === 0 ? back.back : lengthen(back.back);
+  const tuft = recipe.strand && recipe.bangs !== 'none' ? strandMask(recipe.strand, s) : undefined;
+  const strand: Mask | undefined = tuft
+    ? (x, y) => tuft(x, y) && !fringe(x, y) && !sideOf(-1)(x, y) && !sideOf(1)(x, y)
+    : undefined;
   return {
-    front: (x, y) => fringe(x, y) || sideOf(-1)(x, y) || sideOf(1)(x, y),
+    front: (x, y) =>
+      fringe(x, y) || sideOf(-1)(x, y) || sideOf(1)(x, y) || (strand?.(x, y) ?? false),
+    ...(strand ? { strand } : {}),
     sides: [sideOf(-1), sideOf(1)],
     pieces: { bangs: fringe, leftSideHair: sideOf(-1), rightSideHair: sideOf(1), backHair: behind },
     back: behind,
@@ -779,6 +803,116 @@ function accessory(recipe: Recipe, g: Grid, s: number, face: Mask): void {
   }
 }
 
+/**
+ * A built-in headpiece: the row that meets the head goes behind the hair, the rest in front.
+ * Turned, the far side of a pair is hidden, like a turned ear.
+ */
+function drawHeadpiece(
+  style: NonNullable<ReturnType<typeof builtInHeadpiece>>,
+  recipe: Recipe,
+  behind: Grid,
+  front: Grid,
+  s: number,
+  far: number,
+): void {
+  const cx = Math.round(C + s);
+  const pair = (
+    rows: readonly string[],
+    left: number,
+    right: number,
+    y: number,
+    pal: Record<string, string>,
+    mirror = true,
+  ) => {
+    const tips = rows.slice(0, -1);
+    if (far >= 0) {
+      sprite(behind, rows, cx + left, y, pal);
+      sprite(front, tips, cx + left, y, pal);
+    }
+    if (far <= 0) {
+      sprite(behind, rows, cx + right, y, pal, mirror);
+      sprite(front, tips, cx + right, y, pal, mirror);
+    }
+  };
+  switch (style) {
+    case 'catears':
+      pair(['X...', 'XX..', 'XPX.', 'XXXX'], -9, 5, 2, { X: recipe.hairColor, P: '#f4a3b5' });
+      return;
+    case 'bunnyears':
+      pair(['WW', 'WP', 'WP', 'WP', 'WW'], -6, 4, 0, { W: '#f4f1ec', P: '#f4a3b5' });
+      return;
+    case 'horseears':
+      pair(
+        ['.X.', 'XPX', 'XPX', 'XXX'],
+        -9,
+        6,
+        1,
+        { X: shade(recipe.hairColor, 0.9), P: '#f4a3b5' },
+        false,
+      );
+      return;
+    case 'horns':
+      pair(['.H', 'HH', 'Hh'], -8, 6, 1, { H: '#5b3a6e', h: '#7d5694' });
+      return;
+    case 'halo': {
+      const ring = (x: number, y: number) =>
+        ellipse(C + s, 1.6, 6.5, 1.8)(x, y) && !ellipse(C + s, 1.6, 4.4, 0.8)(x, y);
+      paint(behind, (x, y) => ring(x, y) && y < 2, GOLD);
+      paint(front, (x, y) => ring(x, y) && y >= 2, GOLD);
+      return;
+    }
+    case 'wings':
+      pair(['W..', 'WW.', 'WwW', '.ww'], -13, 10, 7, { W: '#f4f1ec', w: '#cfd6e2' });
+      return;
+  }
+}
+
+const ANIMALS: Record<
+  AvatarAnimalSpecies,
+  { ears: string[]; x: number; y: number; inner: 'pink' | 'fur'; side?: boolean }
+> = {
+  cat: { ears: ['E...', 'EE..', 'EiE.', 'EEEE'], x: -9, y: 2, inner: 'pink' },
+  fox: { ears: ['D....', 'EE...', 'EiE..', 'EiiE.', 'EEEEE'], x: -10, y: 1, inner: 'fur' },
+  rabbit: { ears: ['EE', 'Ei', 'Ei', 'Ei', 'Ei', 'EE'], x: -6, y: 0, inner: 'pink' },
+  bear: { ears: ['.EE.', 'EiiE', 'EEEE'], x: -10, y: 3, inner: 'fur' },
+  dog: { ears: ['EEE.', 'EEEE', 'EEEE', '.EEE', '..EE'], x: -13, y: 7, inner: 'fur', side: true },
+};
+
+function patternMask(recipe: Recipe, s: number, fs: number, face: Mask): Mask {
+  const cx = C + s;
+  const mid = C + fs * 0.6;
+  switch (recipe.pattern) {
+    case 'tabby': {
+      let top = 0;
+      while (top < N && !face(Math.round(cx), top)) top++;
+      return (x, y) =>
+        (y >= top &&
+          y <= top + 3 &&
+          Math.abs(x + 0.5 - cx) <= 3 &&
+          (x + 40 - Math.round(cx)) % 2 === 0) ||
+        ((y === 17 || y === 19) && Math.abs(x + 0.5 - mid) >= 6.5);
+    }
+    case 'spots':
+      return (x, y) =>
+        [
+          [-7, 21],
+          [-6, 22],
+          [-5, 21],
+          [5, 21],
+          [6, 22],
+          [7, 21],
+          [-2, 23],
+          [2, 23],
+        ].some(([dx, dy]) => x === Math.round(cx) + dx! && y === dy);
+    case 'patches':
+      return (x, y) => ellipse(cx - 4, 14, 3.6, 3.2)(x, y) || ellipse(cx + 5, 9, 2.6, 2)(x, y);
+    case 'colorpoint':
+      return (x, y) => (x + 0.5 - cx) ** 2 / 64 + (y + 0.5 - 16.6) ** 2 / 49 > 0.62;
+    default:
+      return () => false;
+  }
+}
+
 const POINTED_EARS: Partial<
   Record<NonNullable<Recipe['species']>, { rows: string[]; rise: number }>
 > = {
@@ -913,11 +1047,17 @@ function renderFigure(
       }
     : front;
   const flower = recipe.species === 'flower';
+  const animal = isAnimalSpecies(recipe.species) ? ANIMALS[recipe.species] : undefined;
   const hiddenNow = hiddenChoices(recipe);
   const drawnParts = new Map(
     REPLACE_PART_SLOTS.flatMap((slot) => {
       const part = wornPart(recipe, slot);
-      const shown = slot === 'petals' || slot === 'flowerBase' ? flower : !hiddenNow.includes(slot);
+      const shown =
+        slot === 'petals' || slot === 'flowerBase'
+          ? flower
+          : slot === 'pattern'
+            ? animal !== undefined
+            : !hiddenNow.includes(slot);
       return part && shown ? [[slot, part.front] as const] : [];
     }),
   );
@@ -997,7 +1137,10 @@ function renderFigure(
       : {
           ...builtin,
           front: (x, y) =>
-            piece('bangs')(x, y) || piece('leftSideHair')(x, y) || piece('rightSideHair')(x, y),
+            piece('bangs')(x, y) ||
+            piece('leftSideHair')(x, y) ||
+            piece('rightSideHair')(x, y) ||
+            (builtin.strand?.(x, y) ?? false),
           sides: [piece('leftSideHair'), piece('rightSideHair')],
           back: piece('backHair'),
           ...(drawnHair.some((drawn) => drawn.slot === 'backHair') ? { ties: [] } : {}),
@@ -1053,9 +1196,24 @@ function renderFigure(
   placeCells(back, inked('backHair'), false);
   overlay(back, 'petals');
   if (headpiece) placeCells(back, headpiece.back);
+  const wornHead = flower || hiddenNow.includes('headpiece') ? undefined : builtInHeadpiece(recipe);
+  const headFront = blank();
+  if (wornHead) drawHeadpiece(wornHead, recipe, back, headFront, s, turned ? d : 0);
 
   const head = blank();
   paint(head, face, skin);
+  if (animal) {
+    const pattern = patternMask(recipe, s, fs, face);
+    if (!skip('pattern'))
+      paint(
+        head,
+        (x, y) => face(x, y) && pattern(x, y),
+        TONES[recipe.pattern === 'patches' ? -2 : -1](skin),
+      );
+    overlay(head, 'pattern');
+    const muzzle = ellipse(C + fs * 0.6, 20.6 + (recipe.height ?? 0), 3.9, 2.6);
+    paint(head, (x, y) => face(x, y) && muzzle(x, y), TONES[2](skin));
+  }
   const h = recipe.height ?? 0;
   if (recipe.beard && !flower && !skip('beard')) {
     const centre = C + fs * 0.6;
@@ -1085,6 +1243,24 @@ function renderFigure(
   const pointed = recipe.species ? POINTED_EARS[recipe.species] : undefined;
   if (flower) {
     // A flower has petals instead of ears.
+  } else if (animal) {
+    paint(head, masks.front, hairColor);
+    const pal = {
+      E: recipe.pattern === 'colorpoint' || animal.side ? shade(skin, 0.72) : skin,
+      i: animal.inner === 'pink' ? '#f4a3b5' : shade(skin, 0.72),
+      D: shade(skin, 0.45),
+    };
+    const cx = Math.round(C + s);
+    const sides = animal.side && turned ? [-d] : [-1, 1];
+    for (const side of sides)
+      sprite(
+        head,
+        animal.ears,
+        side < 0 ? cx + animal.x : cx - animal.x - animal.ears[0]!.length,
+        animal.y,
+        pal,
+        side > 0,
+      );
   } else if (pointed) {
     // Pointed ears are drawn over hair: the outer tip rises above the ear line.
     const pal = { E: skin, e: shade(skin, 0.86), i: shade(skin, 0.74) };
@@ -1107,16 +1283,19 @@ function renderFigure(
       E: skin,
       e: shade(skin, 0.8),
     });
-  if (!pointed && !flower) paint(head, masks.front, hairColor);
+  if (!pointed && !flower && !animal) paint(head, masks.front, hairColor);
   for (const [x, y] of masks.ties ?? [])
     sprite(back, ['T'], Math.round(x), y, { T: shade(recipe.shirtColor, 0.8) });
-  if (!flower && !skip('accessory')) accessory(recipe, head, s, face);
+  if (!flower && !skip('accessory') && !hiddenNow.includes('accessory'))
+    accessory(recipe, head, s, face);
 
   const shadeHair = (g: Grid) => {
     const out = g.map((r) => [...r]);
     const cells = g.flatMap((row, y) => row.flatMap((c, x) => (c === hairColor ? [[x, y]] : [])));
-    const xs = cells.map(([x]) => x!);
-    const ys = cells.map(([, y]) => y!);
+    const framed = cells.filter(([x, y]) => !builtin.strand?.(x!, y!));
+    const bounds = framed.length ? framed : cells;
+    const xs = bounds.map(([x]) => x!);
+    const ys = bounds.map(([, y]) => y!);
     const left = Math.min(...xs);
     const right = Math.max(...xs);
     const top = Math.min(...ys);
@@ -1156,7 +1335,7 @@ function renderFigure(
             if (g[y - k]?.[x] === hairColor) out[y - k]![x] = shade(hairColor, 0.72);
     const ring = mix(hairColor, WHITE, 0.45);
     for (let x = Math.round(C + s) - 7; x <= Math.round(C + s) + 3; x++) {
-      const first = g.findIndex((row) => row[x] === hairColor);
+      const first = g.findIndex((row, y) => row[x] === hairColor && !builtin.strand?.(x, y));
       if (first < 0) continue;
       const y = first + 2 + Math.round(Math.abs(x + 0.5 - (C + s - 2)) / 4);
       if (g[y]?.[x] === hairColor && x % 3 !== 0) out[y]![x] = ring;
@@ -1170,6 +1349,8 @@ function renderFigure(
   const crown = blank();
   placeCells(crown, inked('all-front'), false);
   if (headpiece) placeCells(crown, headpiece.front);
+  for (let y = 0; y < N; y++)
+    for (let x = 0; x < N; x++) if (headFront[y]![x]) crown[y]![x] = headFront[y]![x];
   const figure = blank();
   for (const layer of [back, body, shadeHair(head), drawnOver, crown])
     for (let y = 0; y < N; y++)
@@ -1236,7 +1417,11 @@ function renderFigure(
   const cx = Math.round(C + fs * (turned ? 0.85 : 0.6));
   if (flower) {
     // A flower's face is only its bead eyes and its mouth.
-  } else if (recipe.species === 'dwarf')
+  } else if (animal)
+    sprite(features, ['NNN', '.N.'], Math.round(C + fs * 0.6) - 1, 18 + h, {
+      N: mix(INK, skin, 0.2),
+    });
+  else if (recipe.species === 'dwarf')
     sprite(features, ['.N.', 'NnN'], cx - 1, 17 + h, {
       N: shade(skin, 0.84),
       n: shade(skin, 0.72),
@@ -1322,22 +1507,63 @@ function renderFigure(
   }
 
   const full = clip(outline(figure));
-  AVATAR_PIECE_COLORS.forEach((key, i) => {
-    const color = recipe[key];
-    const mask = masks.sides?.[i];
-    if (color === undefined || !mask || color.toLowerCase() === hairColor.toLowerCase()) return;
+  const variants = new Map<string, Grid>();
+  const recolor = (color: string) => {
+    const cached = variants.get(color.toLowerCase());
+    if (cached) return cached;
     const variant = blank();
-    const plain = { ...recipe, hairColor: color };
-    for (const k of AVATAR_PIECE_COLORS) delete plain[k];
+    variants.set(color.toLowerCase(), variant);
+    const plain: Recipe = { ...recipe, hairColor: color };
+    for (const k of [...AVATAR_PIECE_COLORS, ...AVATAR_PIECE_COLORS_V4]) delete plain[k];
     for (const cell of renderFigure(plain, yawDeg, {}, omit).cells)
       variant[cell.y]![cell.x] = cell.c;
-    const near = (x: number, y: number) =>
-      mask(x, y) || mask(x - 1, y) || mask(x + 1, y) || mask(x, y - 1) || mask(x, y + 1);
-    for (let y = 0; y < N; y++)
-      for (let x = 0; x < N; x++)
-        if (full[y]![x] && near(x, y) && !eyes[y]![x] && !glasses[y]![x])
-          full[y]![x] = variant[y]![x];
-  });
+    return variant;
+  };
+  if (recipe.assetVersion === 4) {
+    const over = (x: number, y: number) =>
+      !!crown[y]?.[x] || !!drawnOver[y]?.[x] || !!eyes[y]?.[x] || !!glasses[y]?.[x];
+    const hairAt = (x: number, y: number) => head[y]?.[x] === hairColor && !over(x, y);
+    const backAt = (x: number, y: number) =>
+      back[y]?.[x] !== undefined && figure[y]![x] === back[y]![x];
+    const owners: [string | undefined, Mask][] = [
+      [flower ? undefined : recipe.backHairColor, (x, y) => masks.back(x, y) && backAt(x, y)],
+      [
+        recipe.leftSideHairColor,
+        (x, y) => !!masks.sides?.[0](x, y) && (hairAt(x, y) || backAt(x, y)),
+      ],
+      [
+        recipe.rightSideHairColor,
+        (x, y) => !!masks.sides?.[1](x, y) && (hairAt(x, y) || backAt(x, y)),
+      ],
+      [
+        recipe.bangsColor,
+        (x, y) => (builtin.pieces ? piece('bangs')(x, y) : false) && hairAt(x, y),
+      ],
+      [recipe.strandColor, (x, y) => (builtin.strand?.(x, y) ?? false) && hairAt(x, y)],
+    ];
+    for (const [color, owns] of owners) {
+      if (color === undefined || color.toLowerCase() === hairColor.toLowerCase()) continue;
+      const variant = recolor(color);
+      const near = (x: number, y: number) =>
+        owns(x - 1, y) || owns(x + 1, y) || owns(x, y - 1) || owns(x, y + 1);
+      for (let y = 0; y < N; y++)
+        for (let x = 0; x < N; x++)
+          if (full[y]![x] && !over(x, y) && (owns(x, y) || (!figure[y]![x] && near(x, y))))
+            full[y]![x] = variant[y]![x];
+    }
+  } else
+    AVATAR_PIECE_COLORS.forEach((key, i) => {
+      const color = recipe[key];
+      const mask = masks.sides?.[i];
+      if (color === undefined || !mask || color.toLowerCase() === hairColor.toLowerCase()) return;
+      const variant = recolor(color);
+      const near = (x: number, y: number) =>
+        mask(x, y) || mask(x - 1, y) || mask(x + 1, y) || mask(x, y - 1) || mask(x, y + 1);
+      for (let y = 0; y < N; y++)
+        for (let x = 0; x < N; x++)
+          if (full[y]![x] && near(x, y) && !eyes[y]![x] && !glasses[y]![x])
+            full[y]![x] = variant[y]![x];
+    });
   const bodyCells = blank();
   const headCells = blank();
   for (let y = 0; y < N; y++)
@@ -1393,6 +1619,44 @@ export function hairPieceStart(
   return { slot, front, back: [] };
 }
 
+function cellSource(recipe: PixelAvatarRecipe): (c: string) => readonly [PartCell[2], PartTone] {
+  return (c) => {
+    for (const key of AVATAR_COLORS)
+      for (const tone of [0, -1, 1, -2, 2] as const)
+        if (TONES[tone](recipe[key].toLowerCase()) === c) return [key, tone];
+    return [c as PartCell[2], 0];
+  };
+}
+
+/**
+ * The headpiece as a Custom Part to start drawing from: the drawn headpiece worn, or the
+ * built-in headpiece flattened for this recipe in the front pose, its base on the back layer and
+ * the rest on the front layer, so an unchanged copy renders identically facing front.
+ */
+export function headpieceStart(recipe: PixelAvatarRecipe): {
+  slot: 'headpiece';
+  front: PartCell[];
+  back: PartCell[];
+} {
+  const worn = wornPart(recipe, 'headpiece');
+  if (worn) return { slot: 'headpiece', front: [...worn.front], back: [...worn.back] };
+  const style = builtInHeadpiece(recipe);
+  const behind = blank();
+  const over = blank();
+  if (style) drawHeadpiece(style, recipe, behind, over, 0, 0);
+  const source = cellSource(recipe);
+  const front: PartCell[] = [];
+  const back: PartCell[] = [];
+  for (let y = 0; y < 16; y++)
+    for (let x = 0; x < N; x++) {
+      const c = over[y]![x];
+      const b = behind[y]![x];
+      if (c) front.push([x, y, ...source(c)]);
+      if (b && b !== c) back.push([x, y, ...source(b)]);
+    }
+  return { slot: 'headpiece', front, back };
+}
+
 /**
  * The part in a replacement slot as a Custom Part to start drawing from: the drawn part worn
  * there, or the built-in part flattened for this recipe in the front pose. Each pixel becomes a
@@ -1418,12 +1682,7 @@ export function replacePartStart(
             : 'figure';
   const shown = renderFigure(recipe, 0, {}, new Set()).grids[layer];
   const without = renderFigure(recipe, 0, {}, new Set([slot])).grids[layer];
-  const source = (c: string): readonly [PartCell[2], PartTone] => {
-    for (const key of AVATAR_COLORS)
-      for (const tone of [0, -1, 1, -2, 2] as const)
-        if (TONES[tone](recipe[key].toLowerCase()) === c) return [key, tone];
-    return [c as PartCell[2], 0];
-  };
+  const source = cellSource(recipe);
   const front: PartCell[] = [];
   for (let y = 0; y < N; y++)
     for (let x = 0; x < N; x++) {

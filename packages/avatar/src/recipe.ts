@@ -162,9 +162,44 @@ export type AvatarColor = (typeof AVATAR_COLORS)[number];
  */
 export const AVATAR_SPECIES = ['human', 'goblin', 'elf', 'dwarf', 'orc', 'flower'] as const;
 export type AvatarSpecies = (typeof AVATAR_SPECIES)[number];
+/**
+ * Anthropomorphic animal species (asset version 4): a muzzle, animal ears and fur colors. The
+ * skin color is the fur color, and an optional `pattern` is drawn in its tones.
+ */
+export const AVATAR_ANIMAL_SPECIES = ['cat', 'dog', 'fox', 'rabbit', 'bear'] as const;
+export type AvatarAnimalSpecies = (typeof AVATAR_ANIMAL_SPECIES)[number];
+export type AvatarSpeciesV4 = AvatarSpecies | AvatarAnimalSpecies;
+export const isAnimalSpecies = (species: unknown): species is AvatarAnimalSpecies =>
+  (AVATAR_ANIMAL_SPECIES as readonly unknown[]).includes(species);
+/** Fur patterns for animal species, drawn in skin-color tones so they survive recoloring. */
+export const AVATAR_PATTERNS = ['solid', 'tabby', 'spots', 'patches', 'colorpoint'] as const;
+export type AvatarPattern = (typeof AVATAR_PATTERNS)[number];
 /** Optional per-piece hair colors (asset version 2); an absent piece uses `hairColor`. */
 export const AVATAR_PIECE_COLORS = ['leftSideHairColor', 'rightSideHairColor'] as const;
 export type AvatarPieceColor = (typeof AVATAR_PIECE_COLORS)[number];
+/**
+ * Asset version 4 adds a color for every other hair piece; an absent piece uses `hairColor`.
+ * `strandColor` colors the single strand (`strand`).
+ */
+export const AVATAR_PIECE_COLORS_V4 = ['bangsColor', 'backHairColor', 'strandColor'] as const;
+export type AvatarPieceColorV4 = (typeof AVATAR_PIECE_COLORS_V4)[number];
+/** A single strand of hair standing up from the crown (asset version 4). */
+export const AVATAR_STRANDS = ['ahoge', 'curl', 'double'] as const;
+export type AvatarStrand = (typeof AVATAR_STRANDS)[number];
+/**
+ * Built-in headpieces (asset version 4), worn in the headpiece slot alongside an accessory and
+ * drawn partly behind the hair. The first five were accessories in earlier versions.
+ */
+export const AVATAR_HEADPIECES = [
+  'catears',
+  'bunnyears',
+  'horseears',
+  'horns',
+  'halo',
+  'wings',
+] as const;
+export type AvatarHeadpiece = (typeof AVATAR_HEADPIECES)[number];
+type V4Key = AvatarPieceColorV4 | 'strand' | 'pattern';
 
 /** Part choices that exist only in asset version 2, added after every version 1 choice. */
 export const AVATAR_PARTS_V2 = {
@@ -193,7 +228,9 @@ export type PixelAvatarRecipeV1 = Meta & { assetVersion: 1 } & {
 } & { [P in AvatarRange]?: number } & {
   species?: never;
   rightSideHair?: never;
-} & { [P in AvatarPieceColor | AvatarExtraPart]?: never } & { [P in CustomPartKey]?: never };
+} & { [P in AvatarPieceColor | AvatarExtraPart]?: never } & { [P in CustomPartKey]?: never } & {
+  [P in V4Key]?: never;
+};
 
 /**
  * Asset version 2: a species, the full split hair and geometry, a separate right side hair
@@ -208,7 +245,7 @@ export type PixelAvatarRecipeV2 = Meta & { assetVersion: 2 } & {
   rightSideHair: (typeof AVATAR_HAIR_PARTS)['sideHair'][number];
 } & { [P in AvatarPieceColor]?: string } & {
   [P in AvatarExtraPart]?: (typeof AVATAR_EXTRA_PARTS)[P][number];
-} & { [P in CustomPartKey]?: never };
+} & { [P in CustomPartKey]?: never } & { [P in V4Key]?: never };
 
 /** The recipe key that embeds the Custom Part worn in each slot. */
 export const CUSTOM_PART_KEYS = {
@@ -225,6 +262,7 @@ export const CUSTOM_PART_KEYS = {
   cheeks: 'cheeksPart',
   petals: 'petalsPart',
   flowerBase: 'flowerBasePart',
+  pattern: 'patternPart',
 } as const satisfies Record<PartSlot, string>;
 export type CustomPartKey = (typeof CUSTOM_PART_KEYS)[PartSlot];
 const PART_KEY_ENTRIES = Object.entries(CUSTOM_PART_KEYS) as [PartSlot, CustomPartKey][];
@@ -235,9 +273,30 @@ const PART_KEY_ENTRIES = Object.entries(CUSTOM_PART_KEYS) as [PartSlot, CustomPa
  */
 export type PixelAvatarRecipeV3 = Omit<PixelAvatarRecipeV2, 'assetVersion' | CustomPartKey> & {
   assetVersion: 3;
-} & { [P in CustomPartKey]?: PixelCustomPart };
+} & { [P in Exclude<CustomPartKey, 'patternPart'>]?: PixelCustomPart } & { patternPart?: never };
 
-export type PixelAvatarRecipe = PixelAvatarRecipeV1 | PixelAvatarRecipeV2 | PixelAvatarRecipeV3;
+/**
+ * Asset version 4: version 2 with a color for every hair piece, a single `strand`, and the
+ * headpiece slot holding either a built-in headpiece or a Custom Part, with any number of
+ * Custom Parts worn (none included).
+ */
+export type PixelAvatarRecipeV4 = Omit<
+  PixelAvatarRecipeV2,
+  'assetVersion' | 'species' | CustomPartKey | V4Key
+> & {
+  assetVersion: 4;
+} & { [P in Exclude<CustomPartKey, 'headpiece'>]?: PixelCustomPart } & {
+  headpiece?: PixelCustomPart | AvatarHeadpiece;
+  strand?: AvatarStrand;
+  species: AvatarSpeciesV4;
+  pattern?: AvatarPattern;
+} & { [P in AvatarPieceColorV4]?: string };
+
+export type PixelAvatarRecipe =
+  | PixelAvatarRecipeV1
+  | PixelAvatarRecipeV2
+  | PixelAvatarRecipeV3
+  | PixelAvatarRecipeV4;
 
 export const DEFAULT_RECIPE: PixelAvatarRecipeV1 = {
   schemaVersion: 1,
@@ -269,10 +328,33 @@ export function isPixelAvatarRecipe(value: unknown): value is PixelAvatarRecipe 
   const r = value as Record<string, unknown>;
   const detailed = DETAIL_KEYS.filter((key) => Object.hasOwn(r, key)).length;
   if (detailed !== 0 && detailed !== DETAIL_KEYS.length) return false;
+  const v4 = r['assetVersion'] === 4;
   const v3 = r['assetVersion'] === 3;
-  const v2 = r['assetVersion'] === 2 || v3;
-  const worn = PART_KEY_ENTRIES.filter(([, key]) => Object.hasOwn(r, key));
-  if (v3 ? worn.length === 0 : worn.length !== 0) return false;
+  const v2 = r['assetVersion'] === 2 || v3 || v4;
+  const builtInHead = v4 && typeof r['headpiece'] === 'string';
+  if (builtInHead && !(AVATAR_HEADPIECES as readonly unknown[]).includes(r['headpiece']))
+    return false;
+  const worn = PART_KEY_ENTRIES.filter(
+    ([slot, key]) => Object.hasOwn(r, key) && !(slot === 'headpiece' && builtInHead),
+  );
+  if (v3 ? worn.length === 0 : !v4 && worn.length !== 0) return false;
+  if (!v4 && Object.hasOwn(r, CUSTOM_PART_KEYS.pattern)) return false;
+  const newer = [...AVATAR_PIECE_COLORS_V4, 'strand', 'pattern'].filter((key) =>
+    Object.hasOwn(r, key),
+  );
+  if (
+    newer.length !== 0 &&
+    (!v4 ||
+      !AVATAR_PIECE_COLORS_V4.every(
+        (key) =>
+          !Object.hasOwn(r, key) || (typeof r[key] === 'string' && /^#[\da-f]{6}$/iu.test(r[key])),
+      ) ||
+      (Object.hasOwn(r, 'strand') &&
+        !(AVATAR_STRANDS as readonly unknown[]).includes(r['strand'])) ||
+      (Object.hasOwn(r, 'pattern') &&
+        !(AVATAR_PATTERNS as readonly unknown[]).includes(r['pattern'])))
+  )
+    return false;
   for (const [slot, key] of worn) {
     const part = r[key];
     if (!isPixelCustomPart(part) || part.slot !== slot) return false;
@@ -281,13 +363,18 @@ export function isPixelAvatarRecipe(value: unknown): value is PixelAvatarRecipe 
   const extras = (Object.keys(AVATAR_EXTRA_PARTS) as AvatarExtraPart[]).filter((key) =>
     Object.hasOwn(r, key),
   );
-  const v2Keys = v2 ? 2 + pieces.length + extras.length + worn.length : 0;
+  const v2Keys = v2
+    ? 2 + pieces.length + extras.length + worn.length + newer.length + (builtInHead ? 1 : 0)
+    : 0;
   if (Object.keys(r).length !== Object.keys(DEFAULT_RECIPE).length + detailed + v2Keys)
     return false;
   if (
     v2 &&
     (detailed === 0 ||
-      !(AVATAR_SPECIES as readonly unknown[]).includes(r['species']) ||
+      !(
+        (AVATAR_SPECIES as readonly unknown[]).includes(r['species']) ||
+        (v4 && isAnimalSpecies(r['species']))
+      ) ||
       !(AVATAR_HAIR_PARTS.sideHair as readonly unknown[]).includes(r['rightSideHair']) ||
       !pieces.every((key) => typeof r[key] === 'string' && /^#[\da-f]{6}$/iu.test(r[key])) ||
       !extras.every((key) => (AVATAR_EXTRA_PARTS[key] as readonly unknown[]).includes(r[key])))
@@ -332,16 +419,25 @@ export function canonicalRecipe(recipe: PixelAvatarRecipe): PixelAvatarRecipe {
       if (recipe[key] !== undefined) canonical[key] = recipe[key].toLowerCase();
     for (const key of Object.keys(AVATAR_EXTRA_PARTS) as AvatarExtraPart[])
       if (recipe[key] !== undefined) canonical[key] = recipe[key];
-    if (recipe.assetVersion === 3)
+    if (recipe.assetVersion === 3 || recipe.assetVersion === 4)
       for (const [, key] of PART_KEY_ENTRIES) {
         const part = recipe[key];
-        if (part !== undefined) canonical[key] = canonicalCustomPart(part);
+        if (part !== undefined)
+          canonical[key] = typeof part === 'string' ? part : canonicalCustomPart(part);
       }
+    if (recipe.assetVersion === 4) {
+      if (recipe.strand !== undefined) canonical['strand'] = recipe.strand;
+      if (recipe.pattern !== undefined && recipe.pattern !== 'solid')
+        canonical['pattern'] = recipe.pattern;
+      for (const key of AVATAR_PIECE_COLORS_V4)
+        if (recipe[key] !== undefined) canonical[key] = recipe[key].toLowerCase();
+    }
   }
   return canonical as PixelAvatarRecipe;
 }
 
 const HAIR_PIECES = ['bangs', 'sideHair', 'rightSideHair', 'backHair'] as const;
+const EAR_PIECES: readonly string[] = ['catears', 'bunnyears', 'horseears'];
 
 /**
  * Saved choices the recipe keeps but does not draw: a flower shows petals and a stem instead of
@@ -349,9 +445,14 @@ const HAIR_PIECES = ['bangs', 'sideHair', 'rightSideHair', 'backHair'] as const;
  * the species or headwear changes back.
  */
 export function hiddenChoices(recipe: PixelAvatarRecipe): readonly string[] {
+  const strand =
+    recipe.strand && (recipe.species === 'flower' || recipe.bangs !== 'none') ? ['strand'] : [];
+  const bald = recipe.strand && recipe.bangs === 'none' ? ['strand'] : [];
   if (recipe.species === 'flower')
     return [
       ...HAIR_PIECES,
+      ...strand,
+      ...(typeof recipe.headpiece === 'string' ? ['headpiece'] : []),
       'outfit',
       'accessory',
       'eyes',
@@ -360,14 +461,22 @@ export function hiddenChoices(recipe: PixelAvatarRecipe): readonly string[] {
       'cheeks',
       'glasses',
       ...(recipe.beard || wornPart(recipe, 'beard') ? ['beard'] : []),
+      ...(recipe.pattern || wornPart(recipe, 'pattern') ? ['pattern'] : []),
     ];
   const hidden: string[] = [];
   if (
     (recipe.accessory === 'helmet' || recipe.accessory === 'hood') &&
     !wornPart(recipe, 'accessory')
   )
-    hidden.push(...HAIR_PIECES);
+    hidden.push(...HAIR_PIECES, ...strand);
   if (recipe.species === 'dwarf') hidden.push('nose');
+  if (!hidden.includes('strand')) hidden.push(...bald);
+  if (isAnimalSpecies(recipe.species)) {
+    hidden.push('nose');
+    if (EAR_PIECES.includes(builtInHeadpiece(recipe) ?? '')) hidden.push('headpiece');
+    if (EAR_PIECES.includes(recipe.accessory) && !wornPart(recipe, 'accessory'))
+      hidden.push('accessory');
+  } else if (recipe.pattern || wornPart(recipe, 'pattern')) hidden.push('pattern');
   return hidden;
 }
 
@@ -378,6 +487,14 @@ export function hiddenChoices(recipe: PixelAvatarRecipe): readonly string[] {
  * species' first suggestion; a custom color is kept.
  */
 export function withSpecies(
+  recipe: PixelAvatarRecipe,
+  species: AvatarAnimalSpecies,
+): PixelAvatarRecipeV4;
+export function withSpecies(
+  recipe: PixelAvatarRecipeV4,
+  species: AvatarSpeciesV4,
+): PixelAvatarRecipeV4;
+export function withSpecies(
   recipe: PixelAvatarRecipeV3,
   species: AvatarSpecies,
 ): PixelAvatarRecipeV3;
@@ -387,55 +504,111 @@ export function withSpecies(
 ): PixelAvatarRecipeV2;
 export function withSpecies(
   recipe: PixelAvatarRecipe,
-  species: AvatarSpecies,
-): PixelAvatarRecipeV2 | PixelAvatarRecipeV3;
+  species: AvatarSpeciesV4,
+): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 | PixelAvatarRecipeV4;
 export function withSpecies(
-  recipe: PixelAvatarRecipe,
-  species: AvatarSpecies,
-): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 {
+  source: PixelAvatarRecipe,
+  species: AvatarSpeciesV4,
+): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 | PixelAvatarRecipeV4 {
+  const recipe: PixelAvatarRecipe =
+    isAnimalSpecies(species) && source.assetVersion !== 4 ? withPieces(source) : source;
   const detailed = detailedRecipe(recipe);
   const previous = recipe.species ?? 'human';
   const suggested = AVATAR_SPECIES_SWATCHES[previous].includes(recipe.skinColor.toLowerCase());
   return {
     ...detailed,
-    assetVersion: recipe.assetVersion === 3 ? 3 : 2,
+    assetVersion: recipe.assetVersion === 1 ? 2 : recipe.assetVersion,
     species,
     rightSideHair: detailed.rightSideHair ?? detailed.sideHair!,
     skinColor:
       suggested && previous !== species ? AVATAR_SPECIES_SWATCHES[species][0]! : recipe.skinColor,
-  } as PixelAvatarRecipeV2 | PixelAvatarRecipeV3;
+  } as PixelAvatarRecipeV2 | PixelAvatarRecipeV3 | PixelAvatarRecipeV4;
 }
 
 /**
  * Returns the recipe wearing `part` in `slot`, or with that slot's part taken off. The recipe
- * embeds its own copy; it is asset version 3 while it wears any part and version 2 otherwise.
+ * embeds its own copy; it is asset version 3 while it wears any part and version 2 otherwise,
+ * and a version 4 recipe stays version 4.
  */
+export function withCustomPart(
+  recipe: PixelAvatarRecipeV4,
+  slot: PartSlot,
+  part: PixelCustomPart | undefined,
+): PixelAvatarRecipeV4;
 export function withCustomPart(
   recipe: PixelAvatarRecipe,
   slot: PartSlot,
   part: PixelCustomPart | undefined,
-): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 {
+): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 | PixelAvatarRecipeV4;
+export function withCustomPart(
+  recipe: PixelAvatarRecipe,
+  slot: PartSlot,
+  part: PixelCustomPart | undefined,
+): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 | PixelAvatarRecipeV4 {
   const base: Record<string, unknown> = {
-    ...(recipe.assetVersion === 1 ? withSpecies(recipe, 'human') : recipe),
+    ...(slot === 'pattern' && part !== undefined
+      ? withPieces(recipe)
+      : recipe.assetVersion === 1
+        ? withSpecies(recipe, 'human')
+        : recipe),
   };
   const key = CUSTOM_PART_KEYS[slot];
   delete base[key];
   if (part !== undefined) base[key] = canonicalCustomPart({ ...part, slot });
+  if (base['assetVersion'] === 4) return base as PixelAvatarRecipeV4;
   const wearing = PART_KEY_ENTRIES.some(([, k]) => base[k] !== undefined);
   return { ...base, assetVersion: wearing ? 3 : 2 } as PixelAvatarRecipeV2 | PixelAvatarRecipeV3;
+}
+
+const MOVED_HEADPIECES: readonly string[] = AVATAR_HEADPIECES;
+
+/**
+ * Returns the recipe as asset version 4, keeping every choice. An accessory that is now a
+ * headpiece moves into the empty headpiece slot, freeing the accessory slot; call this only when
+ * the Human edits, so saved recipes keep rendering as they were.
+ */
+export function withPieces(recipe: PixelAvatarRecipe): PixelAvatarRecipeV4 {
+  if (recipe.assetVersion === 4) return recipe;
+  const base: Record<string, unknown> = {
+    ...(recipe.assetVersion === 1 ? withSpecies(recipe, 'human') : recipe),
+    assetVersion: 4,
+  };
+  if (base['headpiece'] === undefined && MOVED_HEADPIECES.includes(recipe.accessory)) {
+    base['headpiece'] = recipe.accessory;
+    base['accessory'] = 'none';
+  }
+  return base as PixelAvatarRecipeV4;
+}
+
+/** Returns the recipe as asset version 4 wearing a built-in headpiece, or none. */
+export function withBuiltInHeadpiece(
+  recipe: PixelAvatarRecipe,
+  headpiece: AvatarHeadpiece | undefined,
+): PixelAvatarRecipeV4 {
+  const base: Record<string, unknown> = { ...withPieces(recipe) };
+  delete base['headpiece'];
+  if (headpiece !== undefined) base['headpiece'] = headpiece;
+  return base as PixelAvatarRecipeV4;
+}
+
+/** The built-in headpiece worn, if any. */
+export function builtInHeadpiece(recipe: PixelAvatarRecipe): AvatarHeadpiece | undefined {
+  return typeof recipe.headpiece === 'string' ? recipe.headpiece : undefined;
 }
 
 /** `withCustomPart` for the headpiece slot. */
 export function withHeadpiece(
   recipe: PixelAvatarRecipe,
   part: PixelCustomPart | undefined,
-): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 {
+): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 | PixelAvatarRecipeV4 {
   return withCustomPart(recipe, 'headpiece', part);
 }
 
 /** The Custom Part worn in a slot, if any. */
 export function wornPart(recipe: PixelAvatarRecipe, slot: PartSlot): PixelCustomPart | undefined {
-  return recipe.assetVersion === 3 ? recipe[CUSTOM_PART_KEYS[slot]] : undefined;
+  if (recipe.assetVersion !== 3 && recipe.assetVersion !== 4) return undefined;
+  const part = recipe[CUSTOM_PART_KEYS[slot]];
+  return typeof part === 'string' ? undefined : part;
 }
 
 export function detailedRecipe(recipe: PixelAvatarRecipe): PixelAvatarRecipe {
@@ -585,13 +758,18 @@ export const seededRecipe: (seed: string) => PixelAvatarRecipe =
   createSeededRecipe('botharness-avatar');
 
 /** Suggested body colors per species; any color remains allowed. */
-export const AVATAR_SPECIES_SWATCHES: Record<AvatarSpecies, readonly string[]> = {
+export const AVATAR_SPECIES_SWATCHES: Record<AvatarSpeciesV4, readonly string[]> = {
   human: AVATAR_SWATCHES.skinColor,
   goblin: ['#9cc464', '#7fae4f', '#6a9a45', '#b3cf7a', '#5c8a4a', '#8fa86a'],
   elf: ['#fbe7d6', '#f2d3c0', '#e2c9b0', '#d9c7e8', '#b9c6dd', '#8f7fa8'],
   dwarf: ['#f2c4a0', '#e9b08a', '#e0a87e', '#c68863', '#f0b8a0', '#9a6142'],
   orc: ['#8a9a5b', '#6f8a4e', '#7d8c6a', '#5f6f4a', '#9aa070', '#6a7a7a'],
   flower: ['#f6d36b', '#f2b84b', '#ffe3cf', '#e8a85a', '#c98b4a', '#f4f1ec'],
+  cat: ['#f2a65a', '#9aa3ad', '#3a3438', '#f4f1ec', '#c98b4a', '#e8d2b0'],
+  dog: ['#c98b4a', '#e8d2b0', '#8a5a36', '#f4f1ec', '#3a3438', '#d9a066'],
+  fox: ['#e0763a', '#c4452f', '#f2a65a', '#f4f1ec', '#8a5a36', '#9aa3ad'],
+  rabbit: ['#f4f1ec', '#d9c7b8', '#9aa3ad', '#8a5a36', '#e8d2b0', '#3a3438'],
+  bear: ['#8a5a36', '#5a3a2a', '#c98b4a', '#3a3438', '#f4f1ec', '#d9a066'],
 };
 
 const preset = (parts: Partial<PixelAvatarRecipeV1>): PixelAvatarRecipeV1 => ({
