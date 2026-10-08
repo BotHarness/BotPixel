@@ -1,4 +1,9 @@
-import { canonicalCustomPart, isPixelCustomPart, type PixelCustomPart } from './part.js';
+import {
+  canonicalCustomPart,
+  isPixelCustomPart,
+  type PartSlot,
+  type PixelCustomPart,
+} from './part.js';
 import { seededRandom } from './random.js';
 
 export const AVATAR_PARTS = {
@@ -188,7 +193,7 @@ export type PixelAvatarRecipeV1 = Meta & { assetVersion: 1 } & {
 } & { [P in AvatarRange]?: number } & {
   species?: never;
   rightSideHair?: never;
-} & { [P in AvatarPieceColor | AvatarExtraPart]?: never } & { headpiece?: never };
+} & { [P in AvatarPieceColor | AvatarExtraPart]?: never } & { [P in CustomPartKey]?: never };
 
 /**
  * Asset version 2: a species, the full split hair and geometry, a separate right side hair
@@ -203,13 +208,26 @@ export type PixelAvatarRecipeV2 = Meta & { assetVersion: 2 } & {
   rightSideHair: (typeof AVATAR_HAIR_PARTS)['sideHair'][number];
 } & { [P in AvatarPieceColor]?: string } & {
   [P in AvatarExtraPart]?: (typeof AVATAR_EXTRA_PARTS)[P][number];
-} & { headpiece?: never };
+} & { [P in CustomPartKey]?: never };
 
-/** Asset version 3: version 2 with an embedded Custom Part in the headpiece slot. */
-export type PixelAvatarRecipeV3 = Omit<PixelAvatarRecipeV2, 'assetVersion' | 'headpiece'> & {
+/** The recipe key that embeds the Custom Part worn in each slot. */
+export const CUSTOM_PART_KEYS = {
+  headpiece: 'headpiece',
+  bangs: 'bangsPart',
+  leftSideHair: 'leftSideHairPart',
+  rightSideHair: 'rightSideHairPart',
+  backHair: 'backHairPart',
+} as const satisfies Record<PartSlot, string>;
+export type CustomPartKey = (typeof CUSTOM_PART_KEYS)[PartSlot];
+const PART_KEY_ENTRIES = Object.entries(CUSTOM_PART_KEYS) as [PartSlot, CustomPartKey][];
+
+/**
+ * Asset version 3: version 2 wearing at least one embedded Custom Part. A drawn hair piece
+ * replaces the built-in piece, which stays saved and returns when the part is taken off.
+ */
+export type PixelAvatarRecipeV3 = Omit<PixelAvatarRecipeV2, 'assetVersion' | CustomPartKey> & {
   assetVersion: 3;
-  headpiece: PixelCustomPart;
-};
+} & { [P in CustomPartKey]?: PixelCustomPart };
 
 export type PixelAvatarRecipe = PixelAvatarRecipeV1 | PixelAvatarRecipeV2 | PixelAvatarRecipeV3;
 
@@ -245,12 +263,17 @@ export function isPixelAvatarRecipe(value: unknown): value is PixelAvatarRecipe 
   if (detailed !== 0 && detailed !== DETAIL_KEYS.length) return false;
   const v3 = r['assetVersion'] === 3;
   const v2 = r['assetVersion'] === 2 || v3;
-  if (v3 ? !isPixelCustomPart(r['headpiece']) : Object.hasOwn(r, 'headpiece')) return false;
+  const worn = PART_KEY_ENTRIES.filter(([, key]) => Object.hasOwn(r, key));
+  if (v3 ? worn.length === 0 : worn.length !== 0) return false;
+  for (const [slot, key] of worn) {
+    const part = r[key];
+    if (!isPixelCustomPart(part) || part.slot !== slot) return false;
+  }
   const pieces = AVATAR_PIECE_COLORS.filter((key) => Object.hasOwn(r, key));
   const extras = (Object.keys(AVATAR_EXTRA_PARTS) as AvatarExtraPart[]).filter((key) =>
     Object.hasOwn(r, key),
   );
-  const v2Keys = v2 ? 2 + pieces.length + extras.length + (v3 ? 1 : 0) : 0;
+  const v2Keys = v2 ? 2 + pieces.length + extras.length + worn.length : 0;
   if (Object.keys(r).length !== Object.keys(DEFAULT_RECIPE).length + detailed + v2Keys)
     return false;
   if (
@@ -301,7 +324,11 @@ export function canonicalRecipe(recipe: PixelAvatarRecipe): PixelAvatarRecipe {
       if (recipe[key] !== undefined) canonical[key] = recipe[key].toLowerCase();
     for (const key of Object.keys(AVATAR_EXTRA_PARTS) as AvatarExtraPart[])
       if (recipe[key] !== undefined) canonical[key] = recipe[key];
-    if (recipe.assetVersion === 3) canonical['headpiece'] = canonicalCustomPart(recipe.headpiece);
+    if (recipe.assetVersion === 3)
+      for (const [, key] of PART_KEY_ENTRIES) {
+        const part = recipe[key];
+        if (part !== undefined) canonical[key] = canonicalCustomPart(part);
+      }
   }
   return canonical as PixelAvatarRecipe;
 }
@@ -368,21 +395,35 @@ export function withSpecies(
 }
 
 /**
- * Returns the recipe wearing a Custom Part in the headpiece slot (asset version 3), or without
- * one (asset version 2). The recipe embeds its own copy of the part.
+ * Returns the recipe wearing `part` in `slot`, or with that slot's part taken off. The recipe
+ * embeds its own copy; it is asset version 3 while it wears any part and version 2 otherwise.
  */
+export function withCustomPart(
+  recipe: PixelAvatarRecipe,
+  slot: PartSlot,
+  part: PixelCustomPart | undefined,
+): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 {
+  const base: Record<string, unknown> = {
+    ...(recipe.assetVersion === 1 ? withSpecies(recipe, 'human') : recipe),
+  };
+  const key = CUSTOM_PART_KEYS[slot];
+  delete base[key];
+  if (part !== undefined) base[key] = canonicalCustomPart({ ...part, slot });
+  const wearing = PART_KEY_ENTRIES.some(([, k]) => base[k] !== undefined);
+  return { ...base, assetVersion: wearing ? 3 : 2 } as PixelAvatarRecipeV2 | PixelAvatarRecipeV3;
+}
+
+/** `withCustomPart` for the headpiece slot. */
 export function withHeadpiece(
   recipe: PixelAvatarRecipe,
   part: PixelCustomPart | undefined,
 ): PixelAvatarRecipeV2 | PixelAvatarRecipeV3 {
-  const base = recipe.assetVersion === 1 ? withSpecies(recipe, 'human') : recipe;
-  const { headpiece: _, ...rest } = base;
-  if (part === undefined) return { ...rest, assetVersion: 2 } as PixelAvatarRecipeV2;
-  return {
-    ...rest,
-    assetVersion: 3,
-    headpiece: canonicalCustomPart(part),
-  } as PixelAvatarRecipeV3;
+  return withCustomPart(recipe, 'headpiece', part);
+}
+
+/** The Custom Part worn in a slot, if any. */
+export function wornPart(recipe: PixelAvatarRecipe, slot: PartSlot): PixelCustomPart | undefined {
+  return recipe.assetVersion === 3 ? recipe[CUSTOM_PART_KEYS[slot]] : undefined;
 }
 
 export function detailedRecipe(recipe: PixelAvatarRecipe): PixelAvatarRecipe {

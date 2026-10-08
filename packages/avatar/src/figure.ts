@@ -1,6 +1,6 @@
 import { escapeAttribute, type PixelCell } from '@botharness/pixel-morph';
-import type { PartCell, PartTone } from './part.js';
-import { AVATAR_PIECE_COLORS, type PixelAvatarRecipe } from './recipe.js';
+import { HAIR_PART_SLOTS, type HairPartSlot, type PartCell, type PartTone } from './part.js';
+import { AVATAR_PIECE_COLORS, detailedRecipe, wornPart, type PixelAvatarRecipe } from './recipe.js';
 
 type Cell = string | undefined;
 type Grid = Cell[][];
@@ -367,7 +367,14 @@ function detailedHair(
   recipe: Recipe,
   s: number,
   b: number,
-): { back: Mask; front: Mask; ties?: Point[]; bands?: boolean; sides?: [Mask, Mask] } {
+): {
+  back: Mask;
+  front: Mask;
+  ties?: Point[];
+  bands?: boolean;
+  sides?: [Mask, Mask];
+  pieces?: Record<HairPartSlot, Mask>;
+} {
   const of = (style: Recipe['hair'] | undefined) =>
     hair({ ...recipe, hair: style ?? 'none' }, s, b);
   const bangs = of(recipe.bangs);
@@ -384,15 +391,16 @@ function detailedHair(
     (sign: -1 | 1): Mask =>
     (x, y) =>
       y > 7 && sign * (x + 0.5 - C - s) >= 7 && lengthen((sign < 0 ? side : right).front)(x, y);
+  const fringe: Mask = (x, y) =>
+    y <= 7
+      ? bangs.front(x, y) || back.front(x, y)
+      : Math.abs(x + 0.5 - C - s) < 7 && bangs.front(x, y);
+  const behind = length === 0 ? back.back : lengthen(back.back);
   return {
-    front: (x, y) =>
-      y <= 7
-        ? bangs.front(x, y) || back.front(x, y)
-        : Math.abs(x + 0.5 - C - s) < 7
-          ? bangs.front(x, y)
-          : lengthen((x + 0.5 - C - s < 0 ? side : right).front)(x, y),
+    front: (x, y) => fringe(x, y) || sideOf(-1)(x, y) || sideOf(1)(x, y),
     sides: [sideOf(-1), sideOf(1)],
-    back: length === 0 ? back.back : lengthen(back.back),
+    pieces: { bangs: fringe, leftSideHair: sideOf(-1), rightSideHair: sideOf(1), backHair: behind },
+    back: behind,
     ...(back.ties ? { ties: back.ties } : {}),
     ...(back.bands ? { bands: back.bands } : {}),
   };
@@ -876,7 +884,7 @@ export function pixelFigure(
   const covered = recipe.accessory === 'helmet' || recipe.accessory === 'hood';
   const bare: Mask = () => false;
   const petalRing = flower ? petals(recipe.petals ?? 'trumpet', s) : bare;
-  const masks: ReturnType<typeof detailedHair> = flower
+  const builtin: ReturnType<typeof detailedHair> = flower
     ? {
         back: petalRing,
         front: bare,
@@ -890,6 +898,52 @@ export function pixelFigure(
       : recipe.bangs === undefined
         ? hair(recipe, s, b)
         : detailedHair(recipe, s, b);
+  const drawnHair = HAIR_PART_SLOTS.flatMap((slot) => {
+    const part = builtin.pieces ? wornPart(recipe, slot) : undefined;
+    return part ? [{ slot, part }] : [];
+  });
+  const live = (cells: readonly PartCell[], shift: number): Mask => {
+    const keys = new Set(
+      cells.flatMap(([x, y, color, tone]) =>
+        color === 'hairColor' && tone === 0 ? [`${x + shift},${y}`] : [],
+      ),
+    );
+    return (x, y) => keys.has(`${x},${y}`);
+  };
+  const backShift = (): number => {
+    if (s === b || !builtin.pieces) return s;
+    const front = detailedHair(detailedRecipe(recipe), 0, 0).pieces!.backHair;
+    const misses = (shift: number) => {
+      let count = 0;
+      for (let y = 0; y < N; y++)
+        for (let x = -4; x < N + 4; x++)
+          if (front(x, y) !== builtin.pieces!.backHair(x + shift, y)) count++;
+      return count;
+    };
+    return misses(b) < misses(s) ? b : s;
+  };
+  const piece = (slot: HairPartSlot): Mask => {
+    const part = drawnHair.find((drawn) => drawn.slot === slot)?.part;
+    if (!part) return builtin.pieces![slot];
+    return live(part.front, slot === 'backHair' ? backShift() : s);
+  };
+  const masks: ReturnType<typeof detailedHair> =
+    drawnHair.length === 0
+      ? builtin
+      : {
+          ...builtin,
+          front: (x, y) =>
+            piece('bangs')(x, y) || piece('leftSideHair')(x, y) || piece('rightSideHair')(x, y),
+          sides: [piece('leftSideHair'), piece('rightSideHair')],
+          back: piece('backHair'),
+          ...(drawnHair.some((drawn) => drawn.slot === 'backHair') ? { ties: [] } : {}),
+        };
+  const inked = (slot: HairPartSlot | 'all-front') =>
+    drawnHair
+      .filter((drawn) => (slot === 'all-front' ? drawn.slot !== 'backHair' : drawn.slot === slot))
+      .flatMap((drawn) =>
+        drawn.part.front.filter(([, , color, tone]) => !(color === 'hairColor' && tone === 0)),
+      );
 
   const body = blank();
   if (flower) flowerBase(recipe, body, s);
@@ -916,17 +970,18 @@ export function pixelFigure(
       shade(hairColor, 0.68),
     );
 
-  const headpiece = recipe.assetVersion === 3 ? recipe.headpiece : undefined;
-  const placeCells = (grid: Grid, cells: readonly PartCell[]) => {
+  const headpiece = wornPart(recipe, 'headpiece');
+  const placeCells = (grid: Grid, cells: readonly PartCell[], compress = true) => {
     const placed = cells.map(([x, y, color, tone]) => {
       const dx = x + 0.5 - C;
-      const far = turned && d * dx < 0 && Math.abs(dx) >= 5;
+      const far = compress && turned && d * dx < 0 && Math.abs(dx) >= 5;
       const base = color.startsWith('#') ? color.toLowerCase() : recipe[color as 'hairColor'];
       return { x: x + s + (far ? d : 0), y, c: TONES[tone](base), far };
     });
     for (const cell of [...placed.filter((p) => p.far), ...placed.filter((p) => !p.far)])
       if (cell.x >= 0 && cell.x < N) grid[cell.y]![cell.x] = cell.c;
   };
+  placeCells(back, inked('backHair'), false);
   if (headpiece) placeCells(back, headpiece.back);
 
   const head = blank();
@@ -1040,6 +1095,7 @@ export function pixelFigure(
   };
 
   const crown = blank();
+  placeCells(crown, inked('all-front'), false);
   if (headpiece) placeCells(crown, headpiece.front);
   const figure = blank();
   for (const layer of [back, body, shadeHair(head), crown])
@@ -1232,4 +1288,28 @@ export function pixelFigure(
       `${rects(glasses)}</g></g>`,
     ].join(''),
   };
+}
+
+/**
+ * The hair piece in `slot` as a Custom Part to start drawing from: the drawn part worn there,
+ * or the built-in piece flattened for this recipe in the front pose as live `hairColor` cells.
+ * A flattened piece keeps this shape and no longer follows face shape or hair length.
+ */
+export function hairPieceStart(
+  recipe: PixelAvatarRecipe,
+  slot: HairPartSlot,
+): { slot: HairPartSlot; front: PartCell[]; back: PartCell[] } {
+  const worn = wornPart(recipe, slot);
+  if (worn) return { slot, front: [...worn.front], back: [] };
+  const built = detailedHair(detailedRecipe(recipe), 0, 0);
+  const mask = built.pieces![slot];
+  const ties = new Set(
+    slot === 'backHair' ? (built.ties ?? []).map(([x, y]) => `${Math.round(x)},${y}`) : [],
+  );
+  const front: PartCell[] = [];
+  for (let y = 0; y < N; y++)
+    for (let x = 0; x < N; x++)
+      if (ties.has(`${x},${y}`)) front.push([x, y, 'shirtColor', -1]);
+      else if (mask(x, y)) front.push([x, y, 'hairColor', 0]);
+  return { slot, front, back: [] };
 }
