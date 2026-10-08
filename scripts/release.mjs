@@ -43,6 +43,7 @@ if (token && yes) {
 const ORDER = [
   { dir: 'packages/morph', name: '@botharness/pixel-morph', why: 'depends on nothing' },
   { dir: 'packages/avatar', name: '@botharness/pixel-avatar', why: 'depends on pixel-morph' },
+  { dir: 'packages/banner', name: '@botharness/pixel-banner', why: 'depends on nothing' },
 ];
 
 /**

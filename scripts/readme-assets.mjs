@@ -11,6 +11,7 @@ import {
   pixelTileColor,
   seededRecipe,
 } from '../packages/avatar/dist/index.js';
+import { BANNER_SCENES, pixelBannerPixels } from '../packages/banner/dist/index.js';
 import { pixelFrame, planPixels } from '../packages/morph/dist/index.js';
 
 const OUT = new URL('../assets/', import.meta.url);
@@ -265,6 +266,31 @@ function timeline(recipe, keys, hold) {
   );
 }
 
+// every banner scene, drawn on a light and a dark page so both app themes can be checked
+function bannerSheet(background, name) {
+  const s = 2;
+  const gap = 12;
+  const cols = 2;
+  const w = 150 * s;
+  const h = 50 * s;
+  const rows = Math.ceil(BANNER_SCENES.length / cols);
+  const sheet = new Canvas(cols * (w + gap) + gap, rows * (h + gap) + gap, background);
+  BANNER_SCENES.forEach((scene, i) => {
+    const { data, width, height } = pixelBannerPixels({ scene, seed: 1 });
+    const ox = gap + (i % cols) * (w + gap);
+    const oy = gap + Math.floor(i / cols) * (h + gap);
+    for (let y = 0; y < height; y++)
+      for (let x = 0; x < width; x++) {
+        const o = (y * width + x) * 4;
+        const hexColor = `#${[data[o], data[o + 1], data[o + 2]].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+        sheet.rect(ox + x * s, oy + y * s, s, s, hexColor);
+      }
+  });
+  savePng(sheet, name);
+}
+bannerSheet('#f4f4f6', 'banner-scenes-light.png');
+bannerSheet(BG, 'banner-scenes-dark.png');
+
 console.log(
-  `rendered banner.png, morph-turn.gif, morph-crew.gif, morph-faces.gif (${AVATAR_PARTS.hair.length} hairstyles in the catalog)`,
+  `rendered banner.png, morph-turn.gif, morph-crew.gif, morph-faces.gif, banner-scenes-light.png, banner-scenes-dark.png (${AVATAR_PARTS.hair.length} hairstyles in the catalog)`,
 );

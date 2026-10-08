@@ -1,0 +1,84 @@
+{
+  "seeds": [0, 1, 42, 4294967295],
+  "names": ["DeepSeekBot", "Ada", "Bob", "Cleo", "研究员", "qa-bot-01"],
+  "pixels": {
+    "spring:0": "a6715d803a872993",
+    "spring:1": "4f29e021de1083d9",
+    "spring:42": "cdd6aa7b5b17ba41",
+    "spring:4294967295": "bdc8ce0e9b98ac28",
+    "summer:0": "6b49a2240eba7a6d",
+    "summer:1": "6e04f5eec722ec80",
+    "summer:42": "3249395133e604bd",
+    "summer:4294967295": "fd46aa6d796ce768",
+    "autumn:0": "7f155d765ee75099",
+    "autumn:1": "afb813c411b03a7d",
+    "autumn:42": "d8a93f0d2c1a8537",
+    "autumn:4294967295": "b66937680f77e129",
+    "winter:0": "a9f041eaaf647a68",
+    "winter:1": "1c106eca92dcd9f1",
+    "winter:42": "4bf1941f7fa55cc2",
+    "winter:4294967295": "7b5a573a79eceecd",
+    "sea:0": "4ac1a1c636f819f0",
+    "sea:1": "b787c09e6899e5f0",
+    "sea:42": "dbdbfa18a5f53435",
+    "sea:4294967295": "69ae8d213582111a",
+    "mountain:0": "b05461a3562c8a81",
+    "mountain:1": "42bf37b0ea0d0602",
+    "mountain:42": "f7fd2893b2757bc7",
+    "mountain:4294967295": "ebdf94ee3b56f8da",
+    "desert:0": "e203ca548cc6e432",
+    "desert:1": "5b92f1c070ac56a8",
+    "desert:42": "0d94fbfa668ad18e",
+    "desert:4294967295": "18b8d4260f0fbd11",
+    "forest:0": "e39d22b6f29a17ed",
+    "forest:1": "92c2dbb8efbe30fc",
+    "forest:42": "9f13457d3dddda48",
+    "forest:4294967295": "82790f018bdc98cf",
+    "night-sky:0": "e65ca7047a49eb47",
+    "night-sky:1": "c6a93f4ff874a04f",
+    "night-sky:42": "bc2e8c91c0fd4c04",
+    "night-sky:4294967295": "109c1efc211fc7c1",
+    "space:0": "700f0e6bc73d8ecc",
+    "space:1": "d34cb1e8b69d439b",
+    "space:42": "2f8d229a2f62fa93",
+    "space:4294967295": "45771a31b1caf3c3"
+  },
+  "image": {
+    "spring": "a703784e1a3b1846",
+    "summer": "6e3e7da844b50898",
+    "autumn": "14ebeec9cf038904",
+    "winter": "7c601bc9c17ad1e8",
+    "sea": "061ab86a31ac26b1",
+    "mountain": "8905c2e3d9ea1dd8",
+    "desert": "eb246dcbf5a0a6e6",
+    "forest": "7e28ad74b48e3cb9",
+    "night-sky": "e06d2a4c4ce44f2f",
+    "space": "521ea9b7cde6fce1"
+  },
+  "seeded": {
+    "DeepSeekBot": {
+      "scene": "forest",
+      "seed": 374352197
+    },
+    "Ada": {
+      "scene": "autumn",
+      "seed": 901016741
+    },
+    "Bob": {
+      "scene": "autumn",
+      "seed": 2555008588
+    },
+    "Cleo": {
+      "scene": "desert",
+      "seed": 257281357
+    },
+    "研究员": {
+      "scene": "space",
+      "seed": 1338610429
+    },
+    "qa-bot-01": {
+      "scene": "desert",
+      "seed": 1931069019
+    }
+  }
+}
