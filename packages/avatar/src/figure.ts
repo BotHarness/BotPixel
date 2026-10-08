@@ -425,7 +425,10 @@ function detailedHair(
       ? bangs.front(x, y) || back.front(x, y)
       : Math.abs(x + 0.5 - C - s) < 7 && bangs.front(x, y);
   const behind = length === 0 ? back.back : lengthen(back.back);
-  const strand = recipe.strand ? strandMask(recipe.strand, s) : undefined;
+  const tuft = recipe.strand && recipe.bangs !== 'none' ? strandMask(recipe.strand, s) : undefined;
+  const strand: Mask | undefined = tuft
+    ? (x, y) => tuft(x, y) && !fringe(x, y) && !sideOf(-1)(x, y) && !sideOf(1)(x, y)
+    : undefined;
   return {
     front: (x, y) =>
       fringe(x, y) || sideOf(-1)(x, y) || sideOf(1)(x, y) || (strand?.(x, y) ?? false),
@@ -1203,8 +1206,10 @@ function renderFigure(
   const shadeHair = (g: Grid) => {
     const out = g.map((r) => [...r]);
     const cells = g.flatMap((row, y) => row.flatMap((c, x) => (c === hairColor ? [[x, y]] : [])));
-    const xs = cells.map(([x]) => x!);
-    const ys = cells.map(([, y]) => y!);
+    const framed = cells.filter(([x, y]) => !builtin.strand?.(x!, y!));
+    const bounds = framed.length ? framed : cells;
+    const xs = bounds.map(([x]) => x!);
+    const ys = bounds.map(([, y]) => y!);
     const left = Math.min(...xs);
     const right = Math.max(...xs);
     const top = Math.min(...ys);
@@ -1244,7 +1249,7 @@ function renderFigure(
             if (g[y - k]?.[x] === hairColor) out[y - k]![x] = shade(hairColor, 0.72);
     const ring = mix(hairColor, WHITE, 0.45);
     for (let x = Math.round(C + s) - 7; x <= Math.round(C + s) + 3; x++) {
-      const first = g.findIndex((row) => row[x] === hairColor);
+      const first = g.findIndex((row, y) => row[x] === hairColor && !builtin.strand?.(x, y));
       if (first < 0) continue;
       const y = first + 2 + Math.round(Math.abs(x + 0.5 - (C + s - 2)) / 4);
       if (g[y]?.[x] === hairColor && x % 3 !== 0) out[y]![x] = ring;
@@ -1412,20 +1417,26 @@ function renderFigure(
   }
 
   const full = clip(outline(figure));
+  const variants = new Map<string, Grid>();
   const recolor = (color: string) => {
+    const cached = variants.get(color.toLowerCase());
+    if (cached) return cached;
     const variant = blank();
+    variants.set(color.toLowerCase(), variant);
     const plain: Recipe = { ...recipe, hairColor: color };
     for (const k of [...AVATAR_PIECE_COLORS, ...AVATAR_PIECE_COLORS_V4]) delete plain[k];
     for (const cell of renderFigure(plain, yawDeg, {}, omit).cells)
       variant[cell.y]![cell.x] = cell.c;
     return variant;
   };
-  if (AVATAR_PIECE_COLORS_V4.some((key) => recipe[key] !== undefined)) {
-    const hairAt = (x: number, y: number) => head[y]?.[x] === hairColor;
+  if (recipe.assetVersion === 4) {
+    const over = (x: number, y: number) =>
+      !!crown[y]?.[x] || !!drawnOver[y]?.[x] || !!eyes[y]?.[x] || !!glasses[y]?.[x];
+    const hairAt = (x: number, y: number) => head[y]?.[x] === hairColor && !over(x, y);
     const backAt = (x: number, y: number) =>
       back[y]?.[x] !== undefined && figure[y]![x] === back[y]![x];
     const owners: [string | undefined, Mask][] = [
-      [recipe.backHairColor, (x, y) => masks.back(x, y) && backAt(x, y)],
+      [flower ? undefined : recipe.backHairColor, (x, y) => masks.back(x, y) && backAt(x, y)],
       [
         recipe.leftSideHairColor,
         (x, y) => !!masks.sides?.[0](x, y) && (hairAt(x, y) || backAt(x, y)),
@@ -1447,7 +1458,7 @@ function renderFigure(
         owns(x - 1, y) || owns(x + 1, y) || owns(x, y - 1) || owns(x, y + 1);
       for (let y = 0; y < N; y++)
         for (let x = 0; x < N; x++)
-          if (full[y]![x] && (owns(x, y) || (!figure[y]![x] && near(x, y))))
+          if (full[y]![x] && !over(x, y) && (owns(x, y) || (!figure[y]![x] && near(x, y))))
             full[y]![x] = variant[y]![x];
     }
   } else

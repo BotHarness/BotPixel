@@ -418,7 +418,9 @@ const HAIR_PIECES = ['bangs', 'sideHair', 'rightSideHair', 'backHair'] as const;
  * the species or headwear changes back.
  */
 export function hiddenChoices(recipe: PixelAvatarRecipe): readonly string[] {
-  const strand = recipe.strand ? ['strand'] : [];
+  const strand =
+    recipe.strand && (recipe.species === 'flower' || recipe.bangs !== 'none') ? ['strand'] : [];
+  const bald = recipe.strand && recipe.bangs === 'none' ? ['strand'] : [];
   if (recipe.species === 'flower')
     return [
       ...HAIR_PIECES,
@@ -440,6 +442,7 @@ export function hiddenChoices(recipe: PixelAvatarRecipe): readonly string[] {
   )
     hidden.push(...HAIR_PIECES, ...strand);
   if (recipe.species === 'dwarf') hidden.push('nose');
+  if (!hidden.includes('strand')) hidden.push(...bald);
   return hidden;
 }
 
@@ -521,6 +524,7 @@ const MOVED_HEADPIECES: readonly string[] = AVATAR_HEADPIECES;
  * the Human edits, so saved recipes keep rendering as they were.
  */
 export function withPieces(recipe: PixelAvatarRecipe): PixelAvatarRecipeV4 {
+  if (recipe.assetVersion === 4) return recipe;
   const base: Record<string, unknown> = {
     ...(recipe.assetVersion === 1 ? withSpecies(recipe, 'human') : recipe),
     assetVersion: 4,

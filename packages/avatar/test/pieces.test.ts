@@ -165,6 +165,47 @@ describe('every hair piece colored and built-in headpieces (asset version 4)', (
     expect(headpieceStart(human)).toEqual({ slot: 'headpiece', front: [], back: [] });
   });
 
+  it('keeps piece colors to hair pixels: no-ops, headpieces, eyes and petals stay put', () => {
+    const sided = { ...long, leftSideHairColor: '#3fc1b8' } as const;
+    for (const yaw of [0, -30, 30])
+      expect(changed(sided, { ...sided, bangsColor: sided.hairColor }, yaw)).toEqual([]);
+    const ears = withBuiltInHeadpiece({ ...human, bangs: 'curly' }, 'catears');
+    const tinted = { ...ears, bangsColor: '#3fc1b8' };
+    for (const key of ['8,3', '23,3', '7,4', '9,4', '22,4', '24,4'])
+      expect(cells(tinted).get(key)).toBe(cells(ears).get(key));
+    const eyed = {
+      ...human,
+      bangs: 'hime',
+      sideHair: 'crop',
+      rightSideHair: 'crop',
+      backHair: 'long',
+      eyeColor: '#123456',
+    } as const;
+    for (const yaw of [-30, 30]) {
+      const head = pixelFigure({ ...eyed, bangsColor: '#3fc1b8' }, yaw).head;
+      const face = head.indexOf('bh-illustrated-face');
+      expect(head.slice(0, face < 0 ? head.length : face)).not.toContain('#123456');
+    }
+    const flower = withSpecies(human, 'flower');
+    expect(changed(flower, { ...flower, backHairColor: '#3fc1b8' })).toEqual([]);
+  });
+
+  it('keeps withPieces idempotent and hides a strand without bangs', () => {
+    const picked = { ...human, accessory: 'catears' } as const;
+    expect(withPieces(picked)).toBe(picked);
+    const bald = { ...human, bangs: 'none', strand: 'ahoge' } as const;
+    expect(hiddenChoices(bald)).toContain('strand');
+    expect(changed(bald, { ...bald, strand: undefined } as PixelAvatarRecipe)).toEqual([]);
+    const plain = { ...human, bangs: 'crop' } as const;
+    const tufted = { ...plain, strand: 'double' } as const;
+    expect(
+      changed(plain, tufted).every((key) => {
+        const [x, y] = key.split(',').map(Number);
+        return y! <= 4 && Math.abs(x! - 16) <= 4;
+      }),
+    ).toBe(true);
+  });
+
   it('matches the version 4 golden output', () => {
     const recipes: Record<string, PixelAvatarRecipe> = {};
     for (const headpiece of AVATAR_HEADPIECES)
