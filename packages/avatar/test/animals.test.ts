@@ -7,6 +7,7 @@ import {
   AVATAR_SPECIES_SWATCHES,
   AVATAR_TURNS,
   DEFAULT_RECIPE,
+  canonicalRecipe,
   hiddenChoices,
   isPixelAvatarRecipe,
   pixelAvatarSvg,
@@ -130,6 +131,21 @@ describe('animal species with patterns (asset version 4)', () => {
     expect(hiddenChoices(flower)).toContain('pattern');
   });
 
+  it('centers the nose on the muzzle when turned and shows tabby on every head', () => {
+    for (const pose of ['left', 'right'] as const) {
+      const turned = { ...cat, pose } as const;
+      expect(changed(turned, { ...turned, nose: 'line' })).toEqual([]);
+    }
+    for (const head of ['round', 'oval', 'chubby', 'diamond'] as const) {
+      const bare = { ...cat, head, bangs: 'none' } as const;
+      const stripes = changed({ ...bare, pattern: 'tabby' }, bare).filter(
+        (key) => Number(key.split(',')[1]) <= 12,
+      );
+      expect(stripes.length, head).toBeGreaterThan(0);
+    }
+    expect(canonicalRecipe({ ...cat, pattern: 'solid' })).toEqual(canonicalRecipe(cat));
+  });
+
   it('matches the animal golden output', () => {
     const recipes: Record<string, PixelAvatarRecipe> = {};
     for (const species of AVATAR_ANIMAL_SPECIES) {
@@ -142,6 +158,7 @@ describe('animal species with patterns (asset version 4)', () => {
         hairLength: 2,
         head: 'long',
       };
+      recipes[`${species}-right`] = { ...animal, pose: 'right' };
       recipes[`${species}-low`] = {
         ...animal,
         spacing: -1,

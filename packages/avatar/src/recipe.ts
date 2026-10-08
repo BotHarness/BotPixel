@@ -427,7 +427,8 @@ export function canonicalRecipe(recipe: PixelAvatarRecipe): PixelAvatarRecipe {
       }
     if (recipe.assetVersion === 4) {
       if (recipe.strand !== undefined) canonical['strand'] = recipe.strand;
-      if (recipe.pattern !== undefined) canonical['pattern'] = recipe.pattern;
+      if (recipe.pattern !== undefined && recipe.pattern !== 'solid')
+        canonical['pattern'] = recipe.pattern;
       for (const key of AVATAR_PIECE_COLORS_V4)
         if (recipe[key] !== undefined) canonical[key] = recipe[key].toLowerCase();
     }

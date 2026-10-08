@@ -877,14 +877,20 @@ const ANIMALS: Record<
   dog: { ears: ['EEE.', 'EEEE', 'EEEE', '.EEE', '..EE'], x: -13, y: 7, inner: 'fur', side: true },
 };
 
-function patternMask(recipe: Recipe, s: number, fs: number): Mask {
+function patternMask(recipe: Recipe, s: number, fs: number, face: Mask): Mask {
   const cx = C + s;
   const mid = C + fs * 0.6;
   switch (recipe.pattern) {
-    case 'tabby':
+    case 'tabby': {
+      let top = 0;
+      while (top < N && !face(Math.round(cx), top)) top++;
       return (x, y) =>
-        (y >= 5 && y <= 8 && Math.abs(x + 0.5 - cx) <= 3 && (x + 40 - Math.round(cx)) % 2 === 0) ||
+        (y >= top &&
+          y <= top + 3 &&
+          Math.abs(x + 0.5 - cx) <= 3 &&
+          (x + 40 - Math.round(cx)) % 2 === 0) ||
         ((y === 17 || y === 19) && Math.abs(x + 0.5 - mid) >= 6.5);
+    }
     case 'spots':
       return (x, y) =>
         [
@@ -894,8 +900,8 @@ function patternMask(recipe: Recipe, s: number, fs: number): Mask {
           [5, 21],
           [6, 22],
           [7, 21],
-          [-3, 13],
-          [3, 13],
+          [-2, 23],
+          [2, 23],
         ].some(([dx, dy]) => x === Math.round(cx) + dx! && y === dy);
     case 'patches':
       return (x, y) => ellipse(cx - 4, 14, 3.6, 3.2)(x, y) || ellipse(cx + 5, 9, 2.6, 2)(x, y);
@@ -1196,7 +1202,7 @@ function renderFigure(
   const head = blank();
   paint(head, face, skin);
   if (animal) {
-    const pattern = patternMask(recipe, s, fs);
+    const pattern = patternMask(recipe, s, fs, face);
     if (!skip('pattern'))
       paint(
         head,
@@ -1410,7 +1416,10 @@ function renderFigure(
   const cx = Math.round(C + fs * (turned ? 0.85 : 0.6));
   if (flower) {
     // A flower's face is only its bead eyes and its mouth.
-  } else if (animal) sprite(features, ['NNN', '.N.'], cx - 1, 18 + h, { N: mix(INK, skin, 0.2) });
+  } else if (animal)
+    sprite(features, ['NNN', '.N.'], Math.round(C + fs * 0.6) - 1, 18 + h, {
+      N: mix(INK, skin, 0.2),
+    });
   else if (recipe.species === 'dwarf')
     sprite(features, ['.N.', 'NnN'], cx - 1, 17 + h, {
       N: shade(skin, 0.84),

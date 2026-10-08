@@ -9,6 +9,11 @@
     "turns": "dc32e69c6380f9cb",
     "mouths": "1c0511b09403446f"
   },
+  "cat-right": {
+    "front": "fa9da07c1c6cab67",
+    "turns": "f42d3fc8063e2dc7",
+    "mouths": "974cc7fe6e5f014f"
+  },
   "cat-low": {
     "front": "90ff246d12a67016",
     "turns": "9a87b7d4a2d379ce",
@@ -23,6 +28,11 @@
     "front": "f32d52fd83765cd6",
     "turns": "21ae0d8b2f2e4df5",
     "mouths": "e7360fe20ba78b0f"
+  },
+  "dog-right": {
+    "front": "6436103b1c8482aa",
+    "turns": "fc20576ebc062f27",
+    "mouths": "8d4f1ea52a8ccadd"
   },
   "dog-low": {
     "front": "65855abc301db520",
@@ -39,6 +49,11 @@
     "turns": "7a074ef35a8773f5",
     "mouths": "535cfa43d0be61b5"
   },
+  "fox-right": {
+    "front": "e332d5f08cefde9f",
+    "turns": "b22f4518779a8715",
+    "mouths": "9f5f55f450a3101a"
+  },
   "fox-low": {
     "front": "db923153d803e1b1",
     "turns": "88da418d66f3dcc0",
@@ -53,6 +68,11 @@
     "front": "1a714e135a841398",
     "turns": "b2f870a714773c93",
     "mouths": "787517d264da774c"
+  },
+  "rabbit-right": {
+    "front": "e704daacaa34cebf",
+    "turns": "9aa0ab07e9ea330f",
+    "mouths": "2531a70f7d6ca168"
   },
   "rabbit-low": {
     "front": "4af7021a27517af6",
@@ -69,6 +89,11 @@
     "turns": "9166eb9d47a4f5c7",
     "mouths": "aa0bbe7f5c331386"
   },
+  "bear-right": {
+    "front": "eee130ab7857dea6",
+    "turns": "3421dc2ecc328618",
+    "mouths": "f44dc41e1e81bc19"
+  },
   "bear-low": {
     "front": "499221aea0371504",
     "turns": "8c3fdca863c5a658",
@@ -80,14 +105,14 @@
     "mouths": "07ab85334c92a9e4"
   },
   "cat-tabby": {
-    "front": "bdadada330d59f92",
-    "turns": "014166787970824c",
-    "mouths": "1e087ed18bb50df2"
+    "front": "8e46b43d7422fa91",
+    "turns": "c7a5dd1ff13a271d",
+    "mouths": "9898ff9db62607b7"
   },
   "cat-spots": {
-    "front": "527c98033263ce3f",
-    "turns": "48730fde58119ba4",
-    "mouths": "d158200113cedb08"
+    "front": "2ccfb1a68b674e08",
+    "turns": "f8a4f892efce348f",
+    "mouths": "36330505f79d558d"
   },
   "cat-patches": {
     "front": "c54c0776f27fe489",
