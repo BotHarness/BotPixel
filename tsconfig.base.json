@@ -19,7 +19,8 @@
     // against its siblings' source without a build first
     "paths": {
       "@botharness/pixel-morph": ["./packages/morph/src/index.ts"],
-      "@botharness/pixel-avatar": ["./packages/avatar/src/index.ts"]
+      "@botharness/pixel-avatar": ["./packages/avatar/src/index.ts"],
+      "@botharness/pixel-banner": ["./packages/banner/src/index.ts"]
     }
   }
 }

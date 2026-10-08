@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `@botharness/pixel-banner` 0.1.0 (new): seeded 3:1 pixel nature banners for profile headers in ten scenes. A `{ scene, seed }` recipe renders 150×50 pixels and scales them ×10 to exactly 1500×500 RGBA with no smoothing; `seededBannerRecipe(name)` gives the same banner for the same name, and a golden test locks every scene's output.
 - `@botharness/pixel-avatar` 0.2.0: opt-in `mouthLayers` adds saved/closed/half-open/open speech features to every head turn. Existing recipes, static snapshots and default golden output remain unchanged; text pacing stays with the consumer.
 - `@botharness/pixel-morph`: one morph that throws no longer stops the shared animation loop for the others, and a morph started from inside a frame no longer starts a second frame chain.
 

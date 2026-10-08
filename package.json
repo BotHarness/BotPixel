@@ -2,11 +2,11 @@
   "name": "botpixel",
   "version": "0.0.0",
   "private": true,
-  "description": "BotPixel — a pixel morph engine and a pixel avatar kit for agent products",
+  "description": "BotPixel — a pixel morph engine, a pixel avatar kit and pixel banners for agent products",
   "type": "module",
   "scripts": {
     "build": "pnpm -r --filter \"./packages/*\" build",
-    "typecheck": "tsc --noEmit -p packages/morph && tsc --noEmit -p packages/avatar",
+    "typecheck": "tsc --noEmit -p packages/morph && tsc --noEmit -p packages/avatar && tsc --noEmit -p packages/banner",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt --write .",
