@@ -204,7 +204,7 @@ function hair(
   recipe: Recipe,
   s: number,
   b: number,
-): { back: Mask; front: Mask; ties?: Point[]; bands?: boolean } {
+): { back: Mask; front: Mask; ties?: Point[]; bands?: boolean; knots?: Mask } {
   const none: Mask = () => false;
   const cap = ellipse(C + s, 14, 11, 10.6);
   const tip = (x: number, depth = 1) => [0, depth, depth + 1, depth][(x + 40 - s) % 4]!;
@@ -261,11 +261,10 @@ function hair(
       return { back: longBack(25), front: bangs(13, 1, 24) };
     case 'long':
       return { back: longBack(31), front: bangs(13, 1, 26) };
-    case 'bun':
-      return {
-        back: none,
-        front: (x, y) => bangs(12, 1, 18)(x, y) || ellipse(C + s, 2.6, 4, 2.6)(x, y),
-      };
+    case 'bun': {
+      const knot = ellipse(C + s, 2.6, 4, 2.6);
+      return { back: none, front: (x, y) => bangs(12, 1, 18)(x, y) || knot(x, y), knots: knot };
+    }
     case 'pigtails':
       return {
         back: (x, y) =>
@@ -319,14 +318,11 @@ function hair(
         front: (x, y) =>
           cap(x, Math.min(y, 13)) && (y <= 12 || (Math.abs(x + 0.5 - C - s) >= 6.5 && y <= 24)),
       };
-    case 'odango':
-      return {
-        back: none,
-        front: (x, y) =>
-          bangs(12, 1, 18)(x, y) ||
-          ellipse(C + s - 8, 3.5, 3.3, 3)(x, y) ||
-          ellipse(C + s + 8, 3.5, 3.3, 3)(x, y),
-      };
+    case 'odango': {
+      const knots: Mask = (x, y) =>
+        ellipse(C + s - 8, 3.5, 3.3, 3)(x, y) || ellipse(C + s + 8, 3.5, 3.3, 3)(x, y);
+      return { back: none, front: (x, y) => bangs(12, 1, 18)(x, y) || knots(x, y), knots };
+    }
     case 'messy':
       return {
         back: none,
@@ -406,6 +402,11 @@ function detailedHair(
   sides?: [Mask, Mask];
   pieces?: Record<HairPartSlot, Mask>;
   strand?: Mask;
+  /**
+   * Bun and odango knots on top of the head. They are drawn with the fringe, but belong to the back
+   * hair style, so the back hair color owns them.
+   */
+  knots?: Mask;
 } {
   const of = (style: Recipe['hair'] | undefined) =>
     hair({ ...recipe, hair: style ?? 'none' }, s, b);
@@ -441,6 +442,9 @@ function detailedHair(
     back: behind,
     ...(back.ties ? { ties: back.ties } : {}),
     ...(back.bands ? { bands: back.bands } : {}),
+    ...(back.knots
+      ? { knots: (x: number, y: number) => back.knots!(x, y) && !bangs.front(x, y) }
+      : {}),
   };
 }
 
@@ -1525,8 +1529,14 @@ function renderFigure(
     const hairAt = (x: number, y: number) => head[y]?.[x] === hairColor && !over(x, y);
     const backAt = (x: number, y: number) =>
       back[y]?.[x] !== undefined && figure[y]![x] === back[y]![x];
+    // knots drawn with a built-in fringe; a drawn bangs part replaces that fringe
+    const knotAt = (x: number, y: number) =>
+      !drawnHair.some((drawn) => drawn.slot === 'bangs') && !!masks.knots?.(x, y) && hairAt(x, y);
     const owners: [string | undefined, Mask][] = [
-      [flower ? undefined : recipe.backHairColor, (x, y) => masks.back(x, y) && backAt(x, y)],
+      [
+        flower ? undefined : recipe.backHairColor,
+        (x, y) => (masks.back(x, y) && backAt(x, y)) || knotAt(x, y),
+      ],
       [
         recipe.leftSideHairColor,
         (x, y) => !!masks.sides?.[0](x, y) && (hairAt(x, y) || backAt(x, y)),
@@ -1537,7 +1547,7 @@ function renderFigure(
       ],
       [
         recipe.bangsColor,
-        (x, y) => (builtin.pieces ? piece('bangs')(x, y) : false) && hairAt(x, y),
+        (x, y) => (builtin.pieces ? piece('bangs')(x, y) : false) && hairAt(x, y) && !knotAt(x, y),
       ],
       [recipe.strandColor, (x, y) => (builtin.strand?.(x, y) ?? false) && hairAt(x, y)],
     ];
