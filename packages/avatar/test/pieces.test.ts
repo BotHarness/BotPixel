@@ -150,6 +150,29 @@ describe('every hair piece colored and built-in headpieces (asset version 4)', (
     expect(hiddenChoices({ ...withSpecies(strand, 'flower') })).toContain('strand');
   });
 
+  it('colors bun and odango knots with the back hair color, not the bangs color', () => {
+    for (const backHair of ['bun', 'odango'] as const) {
+      const knotted = { ...long, backHair, bangs: 'crop' } as const;
+      const back = changed(knotted, { ...knotted, backHairColor: '#3fc1b8' });
+      expect(back.length).toBeGreaterThan(4);
+      expect(back.every((key) => Number(key.split(',')[1]) <= 7)).toBe(true);
+      const bangs = changed(knotted, { ...knotted, bangsColor: '#f06292' });
+      // only the dark outline on the seam between knot and fringe may take both colors
+      const base = cells(knotted);
+      const shared = bangs.filter((key) => back.includes(key));
+      expect(shared.length).toBeLessThanOrEqual(4);
+      for (const key of shared)
+        expect(
+          Math.max(...[1, 3, 5].map((i) => parseInt(base.get(key)!.slice(i, i + 2), 16))),
+        ).toBeLessThan(0x40);
+      expect(changed({ ...knotted, backHairColor: knotted.hairColor }, knotted)).toEqual([]);
+      for (const yaw of [-30, 30])
+        expect(
+          changed(knotted, { ...knotted, backHairColor: '#3fc1b8' }, yaw).length,
+        ).toBeGreaterThan(4);
+    }
+  });
+
   it('flattens a built-in headpiece into a Custom Part that renders identically facing front', () => {
     for (const headpiece of AVATAR_HEADPIECES) {
       const wearing = withBuiltInHeadpiece({ ...human, accessory: 'hairclip' }, headpiece);
