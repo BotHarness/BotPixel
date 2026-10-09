@@ -1,0 +1,65 @@
+{
+  "ownerCommit": "ac9e25740e7ef33d1409b124d9bab23d16732ced",
+  "hostBase": "fc356883152ac5d86b11993216084dbda60be4d4",
+  "hostMain": "66d2767a",
+  "package": "0.10.1 locally packed, unpublished; Companion-only version2 QA opt-in",
+  "dsh": "0.2.0-rc.1",
+  "viewport": {
+    "width": 1559,
+    "height": 865
+  },
+  "language": "Chinese",
+  "theme": "dark",
+  "capture": "Continuous silent official Chrome DevTools MCP; container remux only",
+  "durationSeconds": 48.767,
+  "actualCanonicalReply": {
+    "length": 3219,
+    "sha256": "8d04f411ab5602e806115a4c2e404a0bdf096190ecf150b20b0c059a3bcdc36d",
+    "exactRequestedText": true
+  },
+  "actualSharedCompanionStreamsDestroyed": 1,
+  "domSamples": 236,
+  "staleSamples": 118,
+  "staleMouthStates": ["saved"],
+  "staleObservationMilliseconds": 6859.699999988079,
+  "beforeCut": {
+    "sync": "live",
+    "mouthStates": ["closed"],
+    "cards": 1,
+    "revealedCharacters": 193
+  },
+  "firstStale": {
+    "sync": "stale",
+    "mouthStates": ["saved"],
+    "cards": 1,
+    "revealedCharacters": 286
+  },
+  "staleHeld": {
+    "sync": "stale",
+    "mouthStates": ["saved"],
+    "cards": 1,
+    "revealedCharacters": 404
+  },
+  "recovered": {
+    "sync": "live",
+    "mouthStates": ["half-open"],
+    "cards": 1,
+    "revealedCharacters": 454
+  },
+  "sameDocumentTimeOrigin": true,
+  "originalCardPrefixRetained": true,
+  "oneCardThroughout": true,
+  "savedRecipeUnchanged": true,
+  "expectedConnectionErrors": [
+    "Failed to load resource: net::ERR_INCOMPLETE_CHUNKED_ENCODING",
+    "Failed to load resource: net::ERR_EMPTY_RESPONSE"
+  ],
+  "ownedBrowserClosed": true,
+  "proxyClosed": true,
+  "limits": [
+    "Only the actual Companion SSE is cut/refused through an authenticated loopback forwarding hop; other installed Host routes and model remain live. Not full-network outage or genuine backgrounding.",
+    "Current locally packed unpublished candidate in the fixed integrated Host composition; does not certify standalone PR1180 or formal dependency adoption.",
+    "Already committed text continues local reveal during stale synchronization; saved mouth is retained. The original failed test incorrectly required text freezing; its original report and video are preserved privately and excluded from the complete verdict. No product change or synthetic stale/mouth event.",
+    "Not audible voice-cleanup, fast-drag/throw listening, performance, every avatar asset combination, Human shape acceptance or release approval."
+  ]
+}

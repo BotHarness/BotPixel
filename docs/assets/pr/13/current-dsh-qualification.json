@@ -1,0 +1,47 @@
+{
+  "ownerCommit": "ac9e25740e7ef33d1409b124d9bab23d16732ced",
+  "hostBase": "fc356883152ac5d86b11993216084dbda60be4d4",
+  "hostMain": "66d2767a",
+  "hostChanges": "Uncommitted QA-only packed dependency and Companion-only speechMouthVersion 2",
+  "package": "0.10.1 local packed candidate, unpublished",
+  "dsh": "0.2.0-rc.1",
+  "face": "Current owning package DEFAULT_RECIPE, canonically saved through existing authenticated appearance command",
+  "viewport": { "width": 1559, "height": 865 },
+  "theme": "dark",
+  "language": "Chinese",
+  "firstClip": {
+    "durationSeconds": 84.867,
+    "domSamples": 170,
+    "realCanonicalBotReplyExactText": true,
+    "mouthStates": ["saved", "closed", "half-open", "open"],
+    "flatterOpenArtworkReadFromActualDom": true,
+    "liveRevealObserved": true,
+    "restoredSavedExpressionObserved": true,
+    "nativeCloseQualified": false
+  },
+  "secondClip": {
+    "durationSeconds": 83.433,
+    "realCanonicalBotReplyConfirmedInReadOnlyPostflight": true,
+    "canonicalReplyLength": 917,
+    "strictQaExpectedTextMatched": false,
+    "realHeaderCloseFocusedAndNativeEnterPressed": true,
+    "threeSpeakingStatesBeforeClose": true,
+    "pendingMessageRemoved": true,
+    "savedExpressionRestored": true,
+    "sameDocumentTimeOrigin": true,
+    "savedRecipeUnchangedBeforeAndAfter": true
+  },
+  "bothClips": {
+    "capture": "Continuous silent official Chrome DevTools MCP; VP9; container remux only",
+    "consoleErrors": 0,
+    "ownedBrowsersClosed": true
+  },
+  "retainedFailuresAndLimits": [
+    "First recording's QA selector focused source navigation, not header close. Its restoration does not qualify a native dismissal. Its final read-only check used non-existing detail and received404; corrected get postflight proves saved recipe unchanged.",
+    "The first exact-dismiss setup refused to interrupt a live daemon. Inspection found only an owned blank page; it was closed before the separate retry. No message was sent by that failed setup.",
+    "The second recording proves native dismissal and saved restoration. Its strict text wait timed out: the model's actual917-character canonical reply differed from the requested repetitive text. A separate read-only postflight established the canonical Bot reply; neither the message nor the failed result was rewritten.",
+    "Both clips retain their original continuous duration, including QA waiting; they are not stitched together or called entirely passing scripts.",
+    "This runtime qualification covers DEFAULT_RECIPE only. New animal, hair and pattern combinations are source-regression covered, not visually qualified here.",
+    "No synthetic SSE, forced mouth state, recipe migration, timing interpolation, added audio, publication, formal downstream dependency installation or performance claim. Human shape acceptance and explicit release approval remain separate."
+  ]
+}
